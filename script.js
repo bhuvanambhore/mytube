@@ -1,93 +1,115 @@
-let videos=[]
-const container=document.getElementById("videos")
-const search=document.getElementById("search")
-const filter=document.getElementById("filter")
+let videos = JSON.parse(localStorage.getItem("videos")) || []
 
-async function loadCSV(){
+const grid = document.getElementById("videoGrid")
+const search = document.getElementById("search")
+const categoryFilter = document.getElementById("categoryFilter")
 
-let res=await fetch("videos.csv")
-let text=await res.text()
+function extractID(url){
+return url.split("v=")[1]?.split("&")[0]
+}
 
-let rows=text.split("\n").slice(1)
+async function addVideo(){
 
-rows.forEach(r=>{
-
-let [cat,title,url]=r.split(",")
+let url=document.getElementById("videoLink").value
+let category=document.getElementById("videoCategory").value
 
 if(!url) return
 
-videos.push({
-category:cat,
-title:title,
+let api=`https://www.youtube.com/oembed?url=${url}&format=json`
+let res=await fetch(api)
+let data=await res.json()
+
+videos.unshift({
+title:data.title,
 url:url,
-thumb:`https://img.youtube.com/vi/${url.split("v=")[1]}/hqdefault.jpg`
+category:category,
+thumb:data.thumbnail_url
 })
 
-})
+localStorage.setItem("videos",JSON.stringify(videos))
 
 updateCategories()
 showVideos(videos)
 
 }
 
-function updateCategories(){
-
-let cats=[...new Set(videos.map(v=>v.category))]
-
-cats.forEach(c=>{
-filter.innerHTML+=`<option>${c}</option>`
-})
-
-}
-
-function playVideo(id,vid){
-
-document.getElementById(id).innerHTML=
-`<iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`
-
-}
-
 function showVideos(list){
 
-container.innerHTML=""
+grid.innerHTML=""
 
 list.forEach((v,i)=>{
 
-let vid=v.url.split("v=")[1]
+grid.innerHTML+=`
 
-container.innerHTML+=`
-<div class="video">
+<div class="videoCard" onclick="playVideo('${v.url}')">
 
-<h3>${v.title}</h3>
-<p>${v.category}</p>
+<img src="${v.thumb}">
 
-<div id="player${i}">
-<img src="${v.thumb}" class="thumbnail"
-onclick="playVideo('player${i}','${vid}')">
+<div class="videoTitle">
+
+${v.title}
+
+<br>
+<small>${v.category||""}</small>
+
 </div>
 
 </div>
+
 `
 
 })
 
 }
 
-search.addEventListener("keyup",filterVideos)
-filter.addEventListener("change",filterVideos)
+function playVideo(url){
+
+let id=extractID(url)
+
+document.getElementById("player").innerHTML=
+`<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`
+
+document.getElementById("playerModal").style.display="block"
+
+}
+
+function closePlayer(){
+document.getElementById("playerModal").style.display="none"
+document.getElementById("player").innerHTML=""
+}
+
+function updateCategories(){
+
+let cats=[...new Set(videos.map(v=>v.category).filter(Boolean))]
+
+categoryFilter.innerHTML='<option value="">All</option>'
+
+cats.forEach(c=>{
+categoryFilter.innerHTML+=`<option>${c}</option>`
+})
+
+}
 
 function filterVideos(){
 
 let text=search.value.toLowerCase()
-let cat=filter.value
+let cat=categoryFilter.value
 
-let result=videos.filter(v=>
+let filtered=videos.filter(v=>
 v.title.toLowerCase().includes(text) &&
-(cat==""||v.category==cat)
+(cat=="" || v.category==cat)
 )
 
-showVideos(result)
+showVideos(filtered)
 
 }
 
-loadCSV()
+search.addEventListener("keyup",filterVideos)
+categoryFilter.addEventListener("change",filterVideos)
+
+function toggleDark(){
+document.body.classList.toggle("dark")
+}
+
+updateCategories()
+showVideos(videos)
