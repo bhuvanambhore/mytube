@@ -1,47 +1,49 @@
-let videos = JSON.parse(localStorage.getItem("videos")) || []
+let videos=[]
+const container=document.getElementById("videos")
+const search=document.getElementById("search")
+const filter=document.getElementById("filter")
 
-const container = document.getElementById("videos")
-const search = document.getElementById("search")
+async function loadCSV(){
 
-async function addVideo(){
+let res=await fetch("videos.csv")
+let text=await res.text()
 
-let url = document.getElementById("videoLink").value
+let rows=text.split("\n").slice(1)
+
+rows.forEach(r=>{
+
+let [cat,title,url]=r.split(",")
 
 if(!url) return
 
-let api = "https://www.youtube.com/oembed?url="+url+"&format=json"
-
-let res = await fetch(api)
-let data = await res.json()
-
 videos.push({
-title:data.title,
+category:cat,
+title:title,
 url:url,
-thumb:data.thumbnail_url
+thumb:`https://img.youtube.com/vi/${url.split("v=")[1]}/hqdefault.jpg`
 })
 
-localStorage.setItem("videos",JSON.stringify(videos))
+})
 
-document.getElementById("videoLink").value=""
-
+updateCategories()
 showVideos(videos)
 
 }
 
-function playVideo(id,videoId){
+function updateCategories(){
 
-document.getElementById(id).innerHTML =
-`<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`
+let cats=[...new Set(videos.map(v=>v.category))]
+
+cats.forEach(c=>{
+filter.innerHTML+=`<option>${c}</option>`
+})
 
 }
 
-function deleteVideo(index){
+function playVideo(id,vid){
 
-videos.splice(index,1)
-
-localStorage.setItem("videos",JSON.stringify(videos))
-
-showVideos(videos)
+document.getElementById(id).innerHTML=
+`<iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`
 
 }
 
@@ -51,39 +53,41 @@ container.innerHTML=""
 
 list.forEach((v,i)=>{
 
-let videoId = v.url.split("v=")[1]
+let vid=v.url.split("v=")[1]
 
-container.innerHTML +=
-`
+container.innerHTML+=`
 <div class="video">
 
 <h3>${v.title}</h3>
+<p>${v.category}</p>
 
 <div id="player${i}">
 <img src="${v.thumb}" class="thumbnail"
-onclick="playVideo('player${i}','${videoId}')">
+onclick="playVideo('player${i}','${vid}')">
 </div>
-
-<br>
-
-<button onclick="deleteVideo(${i})">Delete</button>
 
 </div>
 `
+
 })
 
 }
 
-search.addEventListener("keyup",()=>{
+search.addEventListener("keyup",filterVideos)
+filter.addEventListener("change",filterVideos)
 
-let text = search.value.toLowerCase()
+function filterVideos(){
 
-let filtered = videos.filter(v =>
-v.title.toLowerCase().includes(text)
+let text=search.value.toLowerCase()
+let cat=filter.value
+
+let result=videos.filter(v=>
+v.title.toLowerCase().includes(text) &&
+(cat==""||v.category==cat)
 )
 
-showVideos(filtered)
+showVideos(result)
 
-})
+}
 
-showVideos(videos)
+loadCSV()
