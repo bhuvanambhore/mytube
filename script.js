@@ -1,24 +1,35 @@
-const videos = [
+const links = [
 
-{
-title:"Learn HTML in 10 minutes",
-url:"https://www.youtube.com/watch?v=qz0aGYrrlhU"
-},
-
-{
-title:"JavaScript Basics",
-url:"https://www.youtube.com/watch?v=W6NZfCO5SIk"
-},
-
-{
-title:"CSS Tutorial",
-url:"https://www.youtube.com/watch?v=yfoY53QXEnI"
-}
+"https://www.youtube.com/watch?v=qz0aGYrrlhU",
+"https://www.youtube.com/watch?v=W6NZfCO5SIk",
+"https://www.youtube.com/watch?v=yfoY53QXEnI"
 
 ]
 
 const container = document.getElementById("videos")
 const search = document.getElementById("search")
+
+let videoData=[]
+
+async function loadVideos(){
+
+for(let url of links){
+
+let api = "https://www.youtube.com/oembed?url="+url+"&format=json"
+
+let res = await fetch(api)
+let data = await res.json()
+
+videoData.push({
+title:data.title,
+url:url
+})
+
+}
+
+showVideos(videoData)
+
+}
 
 function showVideos(list){
 
@@ -26,12 +37,12 @@ container.innerHTML=""
 
 list.forEach(v=>{
 
+let id = v.url.split("v=")[1]
+
 container.innerHTML += `
 <div class="video">
 <h3>${v.title}</h3>
-<a href="${v.url}" target="_blank">
-<button>Watch</button>
-</a>
+<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
 </div>
 `
 
@@ -39,16 +50,16 @@ container.innerHTML += `
 
 }
 
-showVideos(videos)
-
 search.addEventListener("keyup",()=>{
 
-const text = search.value.toLowerCase()
+let text = search.value.toLowerCase()
 
-const filtered = videos.filter(v =>
+let filtered = videoData.filter(v =>
 v.title.toLowerCase().includes(text)
 )
 
 showVideos(filtered)
 
 })
+
+loadVideos()
