@@ -1,33 +1,29 @@
-const links = [
-
-"https://www.youtube.com/watch?v=qz0aGYrrlhU",
-"https://www.youtube.com/watch?v=W6NZfCO5SIk",
-"https://www.youtube.com/watch?v=yfoY53QXEnI"
-
-]
+let videos = JSON.parse(localStorage.getItem("videos")) || []
 
 const container = document.getElementById("videos")
 const search = document.getElementById("search")
 
-let videoData=[]
+async function addVideo(){
 
-async function loadVideos(){
+const url = document.getElementById("videoLink").value
 
-for(let url of links){
+if(!url) return
 
 let api = "https://www.youtube.com/oembed?url="+url+"&format=json"
 
 let res = await fetch(api)
 let data = await res.json()
 
-videoData.push({
+videos.push({
 title:data.title,
 url:url
 })
 
-}
+localStorage.setItem("videos",JSON.stringify(videos))
 
-showVideos(videoData)
+document.getElementById("videoLink").value=""
+
+showVideos(videos)
 
 }
 
@@ -54,7 +50,7 @@ search.addEventListener("keyup",()=>{
 
 let text = search.value.toLowerCase()
 
-let filtered = videoData.filter(v =>
+let filtered = videos.filter(v =>
 v.title.toLowerCase().includes(text)
 )
 
@@ -62,4 +58,4 @@ showVideos(filtered)
 
 })
 
-loadVideos()
+showVideos(videos)
