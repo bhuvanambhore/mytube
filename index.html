@@ -8,21 +8,34 @@
 
 <body>
 
-<h1>🎬 MyTube Library</h1>
-
-<input id="videoLink" placeholder="Paste YouTube link">
-<input id="category" placeholder="Category">
-<button onclick="addVideo()">Add</button>
-
-<br>
+<header>
+<h2>🎬 MyTube</h2>
 
 <input id="search" placeholder="Search videos">
 
-<select id="filter">
-<option value="">All Categories</option>
+<select id="categoryFilter">
+<option value="">All</option>
 </select>
 
-<div id="videos"></div>
+<button onclick="toggleDark()">🌙</button>
+</header>
+
+<section class="addbox">
+
+<input id="videoLink" placeholder="Paste YouTube link">
+<input id="videoCategory" placeholder="Category">
+<button onclick="addVideo()">Add</button>
+
+</section>
+
+<div id="videoGrid"></div>
+
+<div id="playerModal" class="modal">
+<div class="modal-content">
+<span onclick="closePlayer()">✖</span>
+<div id="player"></div>
+</div>
+</div>
 
 <script src="script.js"></script>
 
