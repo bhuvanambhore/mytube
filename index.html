@@ -3,64 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <title>MyTube</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f4f4f4;
-text-align:center;
-}
-
-h1{
-color:#cc0000;
-}
-
-input{
-padding:10px;
-margin:10px;
-width:300px;
-}
-
-button{
-padding:10px 15px;
-background:#cc0000;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-.video{
-background:white;
-width:420px;
-margin:20px auto;
-padding:15px;
-border-radius:10px;
-}
-
-.thumbnail{
-width:400px;
-cursor:pointer;
-}
-
-iframe{
-width:400px;
-height:225px;
-}
-
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>🎬 MyTube</h1>
+<h1>🎬 MyTube Library</h1>
 
 <input id="videoLink" placeholder="Paste YouTube link">
+<input id="category" placeholder="Category">
 <button onclick="addVideo()">Add</button>
 
 <br>
 
 <input id="search" placeholder="Search videos">
+
+<select id="filter">
+<option value="">All Categories</option>
+</select>
 
 <div id="videos"></div>
 
