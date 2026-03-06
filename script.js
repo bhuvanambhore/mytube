@@ -14,7 +14,7 @@ thumb:`https://img.youtube.com/vi/${id}/hqdefault.jpg`
 
 videos.unshift(video)
 
-const token="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"
+const token=""
 
 await fetch("https://api.github.com/repos/bhuvanambhore/mytube/contents/videos.json",{
 method:"PUT",
