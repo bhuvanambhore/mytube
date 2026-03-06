@@ -1,115 +1,31 @@
-let videos = JSON.parse(localStorage.getItem("videos")) || []
-
-const grid = document.getElementById("videoGrid")
-const search = document.getElementById("search")
-const categoryFilter = document.getElementById("categoryFilter")
-
-function extractID(url){
-return url.split("v=")[1]?.split("&")[0]
-}
-
 async function addVideo(){
 
 let url=document.getElementById("videoLink").value
 let category=document.getElementById("videoCategory").value
 
-if(!url) return
+let id=url.split("v=")[1]?.split("&")[0]
 
-let api=`https://www.youtube.com/oembed?url=${url}&format=json`
-let res=await fetch(api)
-let data=await res.json()
-
-videos.unshift({
-title:data.title,
+let video={
+title:"YouTube Video",
 url:url,
 category:category,
-thumb:data.thumbnail_url
-})
-
-localStorage.setItem("videos",JSON.stringify(videos))
-
-updateCategories()
-showVideos(videos)
-
+thumb:`https://img.youtube.com/vi/${id}/hqdefault.jpg`
 }
 
-function showVideos(list){
+videos.unshift(video)
 
-grid.innerHTML=""
+const token="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"
 
-list.forEach((v,i)=>{
-
-grid.innerHTML+=`
-
-<div class="videoCard" onclick="playVideo('${v.url}')">
-
-<img src="${v.thumb}">
-
-<div class="videoTitle">
-
-${v.title}
-
-<br>
-<small>${v.category||""}</small>
-
-</div>
-
-</div>
-
-`
-
+await fetch("https://api.github.com/repos/bhuvanambhore/mytube/contents/videos.json",{
+method:"PUT",
+headers:{
+"Authorization":"token "+token,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+message:"Add new video",
+content:btoa(JSON.stringify(videos,null,2))
+})
 })
 
 }
-
-function playVideo(url){
-
-let id=extractID(url)
-
-document.getElementById("player").innerHTML=
-`<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`
-
-document.getElementById("playerModal").style.display="block"
-
-}
-
-function closePlayer(){
-document.getElementById("playerModal").style.display="none"
-document.getElementById("player").innerHTML=""
-}
-
-function updateCategories(){
-
-let cats=[...new Set(videos.map(v=>v.category).filter(Boolean))]
-
-categoryFilter.innerHTML='<option value="">All</option>'
-
-cats.forEach(c=>{
-categoryFilter.innerHTML+=`<option>${c}</option>`
-})
-
-}
-
-function filterVideos(){
-
-let text=search.value.toLowerCase()
-let cat=categoryFilter.value
-
-let filtered=videos.filter(v=>
-v.title.toLowerCase().includes(text) &&
-(cat=="" || v.category==cat)
-)
-
-showVideos(filtered)
-
-}
-
-search.addEventListener("keyup",filterVideos)
-categoryFilter.addEventListener("change",filterVideos)
-
-function toggleDark(){
-document.body.classList.toggle("dark")
-}
-
-updateCategories()
-showVideos(videos)
