@@ -3,41 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <title>MyTube</title>
-<link rel="stylesheet" href="style.css">
-</head>
 
+<style>
+body{font-family:Arial;text-align:center;background:#f2f2f2}
+input{padding:10px;width:300px}
+button{padding:10px;background:red;color:white;border:none}
+#videos{display:grid;grid-template-columns:repeat(auto-fill,250px);gap:20px;justify-content:center;margin-top:30px}
+.video img{width:250px;cursor:pointer}
+iframe{width:500px;height:280px}
+</style>
+
+</head>
 <body>
 
-<header>
 <h2>🎬 MyTube</h2>
 
-<input id="search" placeholder="Search videos">
-
-<select id="categoryFilter">
-<option value="">All</option>
-</select>
-
-<button onclick="toggleDark()">🌙</button>
-</header>
-
-<section class="addbox">
-
 <input id="videoLink" placeholder="Paste YouTube link">
-<input id="videoCategory" placeholder="Category">
 <button onclick="addVideo()">Add</button>
 
-</section>
-
-<div id="videoGrid"></div>
-
-<div id="playerModal" class="modal">
-<div class="modal-content">
-<span onclick="closePlayer()">✖</span>
 <div id="player"></div>
-</div>
-</div>
 
-<script src="script.js"></script>
+<div id="videos"></div>
+
+<!-- Firebase -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyC6K2g9iMqZkQg8QJV1dU_dqpQXjmcqfPY",
+authDomain: "mytube-pro-8574b.firebaseapp.com",
+projectId: "mytube-pro-8574b",
+storageBucket: "mytube-pro-8574b.firebasestorage.app",
+messagingSenderId: "257345211479",
+appId: "1:257345211479:web:de0b2e790a4d4dc4642712"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const videosDiv=document.getElementById("videos")
+
+window.addVideo=async function(){
+
+let link=document.getElementById("videoLink").value
+
+if(!link) return
+
+let id=link.split("v=")[1]?.split("&")[0]||link.split("/").pop()
+
+await addDoc(collection(db,"videos"),{
+url:link,
+created:Date.now()
+})
+
+document.getElementById("videoLink").value=""
+
+}
+
+function play(url){
+
+let id=url.split("v=")[1]?.split("&")[0]||url.split("/").pop()
+
+document.getElementById("player").innerHTML=
+`<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`
+
+}
+
+const q=query(collection(db,"videos"),orderBy("created","desc"))
+
+onSnapshot(q,(snapshot)=>{
+
+videosDiv.innerHTML=""
+
+snapshot.forEach(doc=>{
+
+let v=doc.data()
+let id=v.url.split("v=")[1]?.split("&")[0]||v.url.split("/").pop()
+
+let thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`
+
+videosDiv.innerHTML+=`
+<div class="video">
+<img src="${thumb}" onclick="play('${v.url}')">
+</div>
+`
+
+})
+
+})
+
+</script>
 
 </body>
 </html>
