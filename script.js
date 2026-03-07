@@ -1,31 +1,40 @@
-async function addVideo(){
+const repo="bhuvanambhore/mytube"
+const container=document.getElementById("videoGrid")
 
-let url=document.getElementById("videoLink").value
-let category=document.getElementById("videoCategory").value
+async function loadVideos(){
 
-let id=url.split("v=")[1]?.split("&")[0]
+const res=await fetch(`https://api.github.com/repos/${repo}/issues`)
+const issues=await res.json()
 
-let video={
-title:"YouTube Video",
-url:url,
-category:category,
-thumb:`https://img.youtube.com/vi/${id}/hqdefault.jpg`
+container.innerHTML=""
+
+issues.forEach(issue=>{
+
+const url=issue.body.match(/https?:\/\/[^\s]+/)
+
+if(!url) return
+
+const video=url[0]
+const id=video.split("v=")[1]
+
+const thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`
+
+container.innerHTML+=`
+
+<div class="videoCard" onclick="playVideo('${video}')">
+
+<img src="${thumb}">
+
+<div class="videoTitle">
+${issue.title}
+</div>
+
+</div>
+
+`
+
+})
+
 }
 
-videos.unshift(video)
-
-const token=""
-
-await fetch("https://api.github.com/repos/bhuvanambhore/mytube/contents/videos.json",{
-method:"PUT",
-headers:{
-"Authorization":"token "+token,
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-message:"Add new video",
-content:btoa(JSON.stringify(videos,null,2))
-})
-})
-
-}
+loadVideos()
