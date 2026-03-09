@@ -2,66 +2,31 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>MyTube</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f2f2f2;
-text-align:center;
-}
-
-input{
-padding:10px;
-margin:5px;
-width:250px;
-}
-
-button{
-padding:10px;
-background:red;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-#videos{
-display:grid;
-grid-template-columns:repeat(auto-fill,220px);
-gap:20px;
-justify-content:center;
-margin-top:30px;
-}
-
-.video img{
-width:220px;
-cursor:pointer;
-}
-
-iframe{
-width:560px;
-height:315px;
-}
-
-</style>
-
+<title>MyTube Pro</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+<header>
+
 <h2>🎬 MyTube</h2>
+
+<input id="search" placeholder="Search videos">
 
 <button onclick="login()">Login</button>
 
-<br><br>
+<button onclick="toggleDark()">🌙</button>
+
+</header>
+
+<div class="addBox">
 
 <input id="videoLink" placeholder="Paste YouTube link">
+
 <button onclick="addVideo()">Add</button>
 
-<br><br>
-
-<input id="search" placeholder="Search videos">
+</div>
 
 <div id="player"></div>
 
