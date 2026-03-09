@@ -7,10 +7,10 @@ background:#f2f2f2;
 header{
 display:flex;
 gap:10px;
+align-items:center;
 padding:10px;
 background:#202020;
 color:white;
-align-items:center;
 }
 
 header input{
@@ -18,54 +18,35 @@ padding:8px;
 width:200px;
 }
 
-.addbox{
-padding:15px;
+.addBox{
 text-align:center;
+margin:20px;
 }
 
-#videoGrid{
+#videos{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:20px;
 padding:20px;
 }
 
 .videoCard{
 background:white;
+padding:10px;
 border-radius:8px;
-overflow:hidden;
-cursor:pointer;
+text-align:center;
 }
 
 .videoCard img{
 width:100%;
+cursor:pointer;
 }
 
-.videoTitle{
-padding:10px;
-font-size:14px;
-}
-
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.8);
-}
-
-.modal-content{
-background:white;
-width:70%;
-margin:5% auto;
-padding:20px;
-}
-
-.modal iframe{
-width:100%;
-height:400px;
+iframe{
+width:560px;
+height:315px;
+display:block;
+margin:auto;
 }
 
 .dark{
