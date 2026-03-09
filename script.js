@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const ADMIN_EMAIL="bhuvanmambhore@email.com"
@@ -30,10 +30,26 @@ alert("Logged in as "+user.email)
 
 }
 
+function getID(url){
+return url.split("v=")[1]?.split("&")[0]||url.split("/").pop()
+}
+
+async function fetchTitle(url){
+
+try{
+const res=await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`)
+const data=await res.json()
+return data.title
+}catch{
+return "YouTube Video"
+}
+
+}
+
 window.addVideo=async function(){
 
 if(!user || user.email!==ADMIN_EMAIL){
-alert("Only admin can add videos")
+alert("Admin only")
 return
 }
 
@@ -41,11 +57,11 @@ const link=document.getElementById("videoLink").value
 
 if(!link) return
 
-const id=link.split("v=")[1]?.split("&")[0]||link.split("/").pop()
+const title=await fetchTitle(link)
 
 await addDoc(collection(db,"videos"),{
 url:link,
-title:"YouTube Video",
+title:title,
 created:Date.now()
 })
 
@@ -55,7 +71,7 @@ document.getElementById("videoLink").value=""
 
 function play(url){
 
-const id=url.split("v=")[1]?.split("&")[0]||url.split("/").pop()
+const id=getID(url)
 
 document.getElementById("player").innerHTML=
 `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`
@@ -74,17 +90,17 @@ snapshot.forEach(d=>{
 
 const v=d.data()
 
-const id=v.url.split("v=")[1]?.split("&")[0]||v.url.split("/").pop()
+const id=getID(v.url)
 
 const thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`
 
 videosDiv.innerHTML+=`
 
-<div class="video">
+<div class="videoCard">
 
 <img src="${thumb}" onclick="play('${v.url}')">
 
-<br>
+<p>${v.title}</p>
 
 <button onclick="deleteVideo('${d.id}')">Delete</button>
 
@@ -99,7 +115,7 @@ videosDiv.innerHTML+=`
 window.deleteVideo=async function(id){
 
 if(!user || user.email!==ADMIN_EMAIL){
-alert("Only admin can delete")
+alert("Admin only")
 return
 }
 
@@ -111,10 +127,16 @@ document.getElementById("search").addEventListener("keyup",function(){
 
 const text=this.value.toLowerCase()
 
-document.querySelectorAll(".video").forEach(v=>{
+document.querySelectorAll(".videoCard").forEach(v=>{
 
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
 
 })
 
 })
+
+window.toggleDark=function(){
+
+document.body.classList.toggle("dark")
+
+}
