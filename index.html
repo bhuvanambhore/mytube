@@ -5,12 +5,45 @@
 <title>MyTube</title>
 
 <style>
-body{font-family:Arial;text-align:center;background:#f2f2f2}
-input{padding:10px;width:300px}
-button{padding:10px;background:red;color:white;border:none}
-#videos{display:grid;grid-template-columns:repeat(auto-fill,250px);gap:20px;justify-content:center;margin-top:30px}
-.video img{width:250px;cursor:pointer}
-iframe{width:500px;height:280px}
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+text-align:center;
+}
+
+input{
+padding:10px;
+margin:5px;
+width:250px;
+}
+
+button{
+padding:10px;
+background:red;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+#videos{
+display:grid;
+grid-template-columns:repeat(auto-fill,220px);
+gap:20px;
+justify-content:center;
+margin-top:30px;
+}
+
+.video img{
+width:220px;
+cursor:pointer;
+}
+
+iframe{
+width:560px;
+height:315px;
+}
+
 </style>
 
 </head>
@@ -19,10 +52,19 @@ iframe{width:500px;height:280px}
 
 <h2>🎬 MyTube</h2>
 
+<button onclick="login()">Login</button>
+
+<br><br>
+
 <input id="videoLink" placeholder="Paste YouTube link">
 <button onclick="addVideo()">Add</button>
 
+<br><br>
+
+<input id="search" placeholder="Search videos">
+
 <div id="player"></div>
+
 <div id="videos"></div>
 
 <script type="module" src="script.js"></script>
