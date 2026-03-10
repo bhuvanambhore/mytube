@@ -38,30 +38,46 @@ cursor:pointer;
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-gap:20px;
+grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+gap:25px;
 margin-top:20px;
 }
 
 .video{
 background:white;
-padding:10px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+overflow:hidden;
 }
 
 .player{
+position:relative;
 width:100%;
 height:170px;
-border-radius:6px;
-overflow:hidden;
 cursor:pointer;
+overflow:hidden;
 }
 
 .player img{
 width:100%;
 height:100%;
 object-fit:cover;
+transition:0.3s;
+}
+
+.player:hover img{
+transform:scale(1.08);
+}
+
+.duration{
+position:absolute;
+bottom:8px;
+right:8px;
+background:rgba(0,0,0,0.8);
+color:white;
+font-size:12px;
+padding:2px 6px;
+border-radius:3px;
 }
 
 iframe{
@@ -70,9 +86,14 @@ height:100%;
 border:none;
 }
 
+.video-info{
+padding:10px;
+}
+
 .title{
 font-weight:bold;
-margin-bottom:6px;
+font-size:15px;
+margin-bottom:8px;
 }
 
 </style>
@@ -117,10 +138,10 @@ return match ? match[1] : null
 
 function addVideo(){
 
-let title = document.getElementById("videoTitle").value
-let url = document.getElementById("videoLink").value
+let title=document.getElementById("videoTitle").value
+let url=document.getElementById("videoLink").value
 
-let id = getID(url)
+let id=getID(url)
 
 if(!id){
 alert("Invalid YouTube link")
@@ -143,29 +164,33 @@ showVideos()
 
 function showVideos(){
 
-let grid = document.getElementById("videoGrid")
+let grid=document.getElementById("videoGrid")
 
 grid.innerHTML=""
 
 videos.forEach((v,index)=>{
 
-let thumb = "https://img.youtube.com/vi/"+v.id+"/0.jpg"
+let thumb="https://img.youtube.com/vi/"+v.id+"/0.jpg"
 
-grid.innerHTML += `
+grid.innerHTML+=`
 
 <div class="video">
-
-<div class="title">${v.title}</div>
 
 <div class="player" onclick="playVideo(${index})" id="player${index}">
 
 <img src="${thumb}">
 
+<div class="duration">YouTube</div>
+
 </div>
 
-<br>
+<div class="video-info">
+
+<div class="title">${v.title}</div>
 
 <button onclick="deleteVideo(${index})">Delete</button>
+
+</div>
 
 </div>
 
@@ -177,11 +202,11 @@ grid.innerHTML += `
 
 function playVideo(index){
 
-let id = videos[index].id
+let id=videos[index].id
 
-let container = document.getElementById("player"+index)
+let container=document.getElementById("player"+index)
 
-container.innerHTML = `
+container.innerHTML=`
 
 <iframe
 src="https://www.youtube.com/embed/${id}?autoplay=1"
@@ -205,15 +230,15 @@ showVideos()
 
 function searchVideo(){
 
-let text = document.getElementById("search").value.toLowerCase()
+let text=document.getElementById("search").value.toLowerCase()
 
-let items = document.querySelectorAll(".video")
+let items=document.querySelectorAll(".video")
 
 items.forEach(item=>{
 
-let title = item.innerText.toLowerCase()
+let title=item.innerText.toLowerCase()
 
-item.style.display = title.includes(text) ? "block":"none"
+item.style.display=title.includes(text)?"block":"none"
 
 })
 
