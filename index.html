@@ -105,17 +105,13 @@ return match ? match[1] : null
 function addVideo(){
 
 let title = document.getElementById("videoTitle").value
-
 let url = document.getElementById("videoLink").value
 
 let id = getID(url)
 
 if(!id){
-
 alert("Invalid YouTube link")
-
 return
-
 }
 
 videos.push({
@@ -172,17 +168,28 @@ Delete
 function playVideo(index){
 
 let id = videos[index].id
-
 let container = document.getElementById("player"+index)
 
 container.innerHTML = `
 
 <iframe
-src="https://www.youtube.com/embed/${id}"
+id="frame${index}"
+src="https://www.youtube.com/embed/${id}?autoplay=1"
+allow="autoplay; fullscreen"
 allowfullscreen>
 </iframe>
 
 `
+
+let iframe = document.getElementById("frame"+index)
+
+setTimeout(()=>{
+
+if (iframe.requestFullscreen) {
+iframe.requestFullscreen()
+}
+
+},500)
 
 }
 
