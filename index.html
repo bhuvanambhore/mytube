@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <title>MyTube</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
 body{
-font-family: Arial;
-background:#f1f1f1;
+font-family:Arial;
 margin:0;
+background:#f1f1f1;
 }
 
 header{
@@ -24,11 +28,12 @@ padding:20px;
 
 input{
 padding:10px;
-width:300px;
+margin:5px;
 }
 
 button{
 padding:10px;
+cursor:pointer;
 }
 
 .grid{
@@ -41,11 +46,21 @@ margin-top:20px;
 .video{
 background:white;
 padding:10px;
-border-radius:5px;
+border-radius:6px;
 }
 
 .video img{
 width:100%;
+border-radius:5px;
+}
+
+.video p{
+font-size:14px;
+}
+
+iframe{
+margin-top:10px;
+border-radius:5px;
 }
 
 </style>
@@ -61,11 +76,12 @@ MyTube
 <div class="container">
 
 <input id="videoLink" placeholder="Paste YouTube link">
+
 <button onclick="addVideo()">Add Video</button>
 
 <br><br>
 
-<input id="search" placeholder="Search video" onkeyup="searchVideo()">
+<input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
 <div class="grid" id="videoGrid"></div>
 
@@ -77,13 +93,11 @@ let videos = JSON.parse(localStorage.getItem("videos")) || []
 
 function getID(url){
 
-let reg = /v=([^&]+)/
+let reg = /(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
 
 let match = url.match(reg)
 
-if(match) return match[1]
-
-return url.split("/").pop()
+return match ? match[1] : null
 
 }
 
@@ -93,17 +107,31 @@ let url = document.getElementById("videoLink").value
 
 let id = getID(url)
 
+if(!id){
+
+alert("Invalid YouTube Link")
+
+return
+
+}
+
 let thumb = "https://img.youtube.com/vi/"+id+"/0.jpg"
 
 let video = {
+
 id:id,
+
 title:"YouTube Video",
+
 thumb:thumb
+
 }
 
 videos.push(video)
 
 localStorage.setItem("videos",JSON.stringify(videos))
+
+document.getElementById("videoLink").value=""
 
 showVideos()
 
@@ -115,7 +143,7 @@ let grid = document.getElementById("videoGrid")
 
 grid.innerHTML=""
 
-videos.forEach((v,i)=>{
+videos.forEach((v,index)=>{
 
 grid.innerHTML+=`
 
@@ -125,11 +153,19 @@ grid.innerHTML+=`
 
 <p>${v.title}</p>
 
-<iframe width="100%" height="150"
-src="https://www.youtube.com/embed/${v.id}">
+<iframe 
+width="100%" 
+height="150"
+src="https://www.youtube.com/embed/${v.id}"
+frameborder="0"
+allowfullscreen>
 </iframe>
 
-<button onclick="deleteVideo(${i})">Delete</button>
+<br>
+
+<button onclick="deleteVideo(${index})">
+Delete
+</button>
 
 </div>
 
@@ -139,9 +175,9 @@ src="https://www.youtube.com/embed/${v.id}">
 
 }
 
-function deleteVideo(i){
+function deleteVideo(index){
 
-videos.splice(i,1)
+videos.splice(index,1)
 
 localStorage.setItem("videos",JSON.stringify(videos))
 
@@ -151,15 +187,23 @@ showVideos()
 
 function searchVideo(){
 
-let s = document.getElementById("search").value.toLowerCase()
+let text = document.getElementById("search").value.toLowerCase()
 
 let items = document.querySelectorAll(".video")
 
-items.forEach(v=>{
+items.forEach(item=>{
 
-let t = v.innerText.toLowerCase()
+let title = item.innerText.toLowerCase()
 
-v.style.display = t.includes(s) ? "block":"none"
+if(title.includes(text)){
+
+item.style.display="block"
+
+}else{
+
+item.style.display="none"
+
+}
 
 })
 
@@ -170,4 +214,5 @@ showVideos()
 </script>
 
 </body>
+
 </html>
