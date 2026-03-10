@@ -1,109 +1,171 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <title>MyTube</title>
 
 <style>
-body{font-family:Arial;background:#f2f2f2;text-align:center}
-input{padding:10px;width:300px}
-button{padding:10px;background:red;color:white;border:none}
-#videos{display:grid;grid-template-columns:repeat(auto-fill,220px);gap:20px;justify-content:center;margin-top:30px}
-.video img{width:220px;cursor:pointer}
-iframe{width:560px;height:315px;margin-top:20px}
+
+body{
+font-family: Arial;
+background:#f1f1f1;
+margin:0;
+}
+
+header{
+background:red;
+color:white;
+padding:15px;
+font-size:24px;
+}
+
+.container{
+padding:20px;
+}
+
+input{
+padding:10px;
+width:300px;
+}
+
+button{
+padding:10px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.video{
+background:white;
+padding:10px;
+border-radius:5px;
+}
+
+.video img{
+width:100%;
+}
+
 </style>
 
 </head>
+
 <body>
 
-<h2>🎬 MyTube</h2>
+<header>
+MyTube
+</header>
+
+<div class="container">
 
 <input id="videoLink" placeholder="Paste YouTube link">
-<button onclick="addVideo()">Add</button>
+<button onclick="addVideo()">Add Video</button>
 
 <br><br>
 
-<input id="search" placeholder="Search videos" onkeyup="searchVideos()">
+<input id="search" placeholder="Search video" onkeyup="searchVideo()">
 
-<div id="player"></div>
+<div class="grid" id="videoGrid"></div>
 
-<div id="videos"></div>
+</div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig={
-apiKey:"AIzaSyC6K2g9iMqZkQg8QJV1dU_dqpQXjmcqfPY",
-authDomain:"mytube-pro-8574b.firebaseapp.com",
-projectId:"mytube-pro-8574b",
-storageBucket:"mytube-pro-8574b.firebasestorage.app",
-messagingSenderId:"257345211479",
-appId:"1:257345211479:web:de0b2e790a4d4dc4642712"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
+let videos = JSON.parse(localStorage.getItem("videos")) || []
 
 function getID(url){
-return url.split("v=")[1]?.split("&")[0] || url.split("/").pop();
+
+let reg = /v=([^&]+)/
+
+let match = url.match(reg)
+
+if(match) return match[1]
+
+return url.split("/").pop()
+
 }
 
-window.addVideo=async function(){
+function addVideo(){
 
-let link=document.getElementById("videoLink").value;
-if(!link) return;
+let url = document.getElementById("videoLink").value
 
-await addDoc(collection(db,"videos"),{
-url:link,
-created:Date.now()
-});
+let id = getID(url)
 
-document.getElementById("videoLink").value="";
+let thumb = "https://img.youtube.com/vi/"+id+"/0.jpg"
+
+let video = {
+id:id,
+title:"YouTube Video",
+thumb:thumb
 }
 
-function play(url){
+videos.push(video)
 
-let id=getID(url);
+localStorage.setItem("videos",JSON.stringify(videos))
 
-document.getElementById("player").innerHTML=
-`<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
+showVideos()
+
 }
 
-const videosDiv=document.getElementById("videos");
+function showVideos(){
 
-const q=query(collection(db,"videos"),orderBy("created","desc"));
+let grid = document.getElementById("videoGrid")
 
-onSnapshot(q,(snapshot)=>{
+grid.innerHTML=""
 
-videosDiv.innerHTML="";
+videos.forEach((v,i)=>{
 
-snapshot.forEach(doc=>{
+grid.innerHTML+=`
 
-let v=doc.data();
-let id=getID(v.url);
-let thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-
-videosDiv.innerHTML+=`
 <div class="video">
-<img src="${thumb}" onclick="play('${v.url}')">
+
+<img src="${v.thumb}">
+
+<p>${v.title}</p>
+
+<iframe width="100%" height="150"
+src="https://www.youtube.com/embed/${v.id}">
+</iframe>
+
+<button onclick="deleteVideo(${i})">Delete</button>
+
 </div>
-`;
 
-});
+`
 
-});
-
-window.searchVideos=function(){
-
-let text=document.getElementById("search").value.toLowerCase();
-
-document.querySelectorAll(".video").forEach(v=>{
-v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none";
-});
+})
 
 }
+
+function deleteVideo(i){
+
+videos.splice(i,1)
+
+localStorage.setItem("videos",JSON.stringify(videos))
+
+showVideos()
+
+}
+
+function searchVideo(){
+
+let s = document.getElementById("search").value.toLowerCase()
+
+let items = document.querySelectorAll(".video")
+
+items.forEach(v=>{
+
+let t = v.innerText.toLowerCase()
+
+v.style.display = t.includes(s) ? "block":"none"
+
+})
+
+}
+
+showVideos()
 
 </script>
 
