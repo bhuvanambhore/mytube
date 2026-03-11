@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube</title>
+<title>MyTube AI</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -36,10 +36,6 @@ padding:10px;
 cursor:pointer;
 }
 
-.filters{
-margin-top:10px;
-}
-
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
@@ -58,7 +54,6 @@ box-shadow:0 2px 8px rgba(0,0,0,0.08);
 position:relative;
 cursor:pointer;
 height:170px;
-overflow:hidden;
 }
 
 .thumbnail img{
@@ -107,7 +102,7 @@ margin-bottom:6px;
 <body>
 
 <header>
-MyTube
+MyTube AI
 </header>
 
 <div class="container">
@@ -116,30 +111,11 @@ MyTube
 
 <input id="videoLink" placeholder="Paste YouTube link">
 
-<select id="videoCategory">
-
-<option value="Finance">Finance</option>
-<option value="Coding">Coding</option>
-<option value="Education">Education</option>
-<option value="Movies">Movies</option>
-
-</select>
-
 <button onclick="addVideo()">Add Video</button>
 
 <br><br>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
-
-<div class="filters">
-
-<button onclick="filterCategory('All')">All</button>
-<button onclick="filterCategory('Finance')">Finance</button>
-<button onclick="filterCategory('Coding')">Coding</button>
-<button onclick="filterCategory('Education')">Education</button>
-<button onclick="filterCategory('Movies')">Movies</button>
-
-</div>
 
 <div class="grid" id="videoGrid"></div>
 
@@ -148,8 +124,6 @@ MyTube
 <script>
 
 let videos = JSON.parse(localStorage.getItem("videos")) || []
-
-let currentCategory="All"
 
 function getID(url){
 
@@ -161,11 +135,28 @@ return match?match[1]:null
 
 }
 
+function detectCategory(title){
+
+title=title.toLowerCase()
+
+if(title.includes("yoga") || title.includes("gym")) return "Gym/Yoga"
+
+if(title.includes("food") || title.includes("recipe")) return "Health Food"
+
+if(title.includes("stock") || title.includes("trade")) return "Trade"
+
+if(title.includes("html") || title.includes("javascript")) return "Coding"
+
+if(title.includes("health")) return "Full Body Care"
+
+return "Education"
+
+}
+
 function addVideo(){
 
 let title=document.getElementById("videoTitle").value
 let url=document.getElementById("videoLink").value
-let category=document.getElementById("videoCategory").value
 
 let id=getID(url)
 
@@ -173,6 +164,8 @@ if(!id){
 alert("Invalid YouTube link")
 return
 }
+
+let category=detectCategory(title)
 
 videos.push({
 title:title,
@@ -197,8 +190,6 @@ grid.innerHTML=""
 
 videos.forEach((v,index)=>{
 
-if(currentCategory!="All" && v.category!=currentCategory) return
-
 let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
 
 grid.innerHTML+=`
@@ -217,7 +208,7 @@ grid.innerHTML+=`
 
 <div class="title">${v.title}</div>
 
-<div class="category">${v.category}</div>
+<div class="category">AI Category: ${v.category}</div>
 
 <button onclick="deleteVideo(${index})">
 Delete
@@ -274,14 +265,6 @@ let title=item.innerText.toLowerCase()
 item.style.display=title.includes(text)?"block":"none"
 
 })
-
-}
-
-function filterCategory(cat){
-
-currentCategory=cat
-
-showVideos()
 
 }
 
