@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube V4</title>
+<title>MyTube V5</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -95,7 +95,7 @@ color:gray;
 margin-bottom:6px;
 }
 
-.filters{
+.preview{
 margin-top:10px;
 }
 
@@ -110,16 +110,16 @@ margin-top:40px;
 <body>
 
 <header>
-MyTube V4
+MyTube V5
 </header>
 
 <div class="container">
 
 <h3>Add Video</h3>
 
-<input id="videoTitle" placeholder="Video title">
+<input id="videoLink" placeholder="Paste YouTube link" oninput="previewVideo()">
 
-<input id="videoLink" placeholder="Paste YouTube link">
+<input id="videoTitle" placeholder="Video title">
 
 <select id="videoCategory">
 
@@ -136,11 +136,13 @@ MyTube V4
 
 <button onclick="addVideo()">Add Video</button>
 
-<br><br>
+<div id="preview" class="preview"></div>
+
+<hr>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
-<div class="filters">
+<div>
 
 <button onclick="filterCategory('All')">All</button>
 <button onclick="filterCategory('Finance')">Finance</button>
@@ -156,21 +158,17 @@ MyTube V4
 
 <div class="grid" id="videoGrid"></div>
 
-<!-- BULK IMPORT AT BOTTOM -->
-
 <div class="section">
 
 <h3>Bulk Import YouTube Links</h3>
 
-<textarea id="bulkLinks" placeholder="Paste many YouTube links (one per line)"></textarea>
+<textarea id="bulkLinks" placeholder="Paste many YouTube links"></textarea>
 
 <br>
 
 <button onclick="bulkImport()">Import Videos</button>
 
 </div>
-
-<!-- LIBRARY TOOLS AT BOTTOM -->
 
 <div class="section">
 
@@ -189,12 +187,31 @@ MyTube V4
 let videos = JSON.parse(localStorage.getItem("videos")) || []
 let currentCategory="All"
 
+function saveVideos(){
+localStorage.setItem("videos",JSON.stringify(videos))
+}
+
 function getID(url){
 
 let reg=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
 let match=url.match(reg)
 
 return match?match[1]:null
+
+}
+
+function previewVideo(){
+
+let url=document.getElementById("videoLink").value
+let id=getID(url)
+
+if(!id) return
+
+let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
+
+document.getElementById("preview").innerHTML=`
+<img src="${thumb}" width="260">
+`
 
 }
 
@@ -207,29 +224,129 @@ let category=document.getElementById("videoCategory").value
 let id=getID(url)
 
 if(!id){
-alert("Invalid YouTube link")
+alert("Invalid link")
 return
 }
 
 videos.push({
 title:title,
 id:id,
-category:category
+category:category,
+pinned:false
 })
 
 saveVideos()
 showVideos()
 
-document.getElementById("videoTitle").value=""
-document.getElementById("videoLink").value=""
+}
+
+function showVideos(){
+
+let grid=document.getElementById("videoGrid")
+
+grid.innerHTML=""
+
+videos.forEach((v,index)=>{
+
+if(currentCategory!="All" && v.category!=currentCategory) return
+
+let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
+
+grid.innerHTML+=`
+
+<div class="video" draggable="true" ondragstart="dragStart(${index})">
+
+<div class="thumbnail" onclick="playVideo(${index})" id="player${index}">
+<img src="${thumb}">
+</div>
+
+<div class="info">
+
+<div class="title">${v.title}</div>
+<div class="category">${v.category}</div>
+
+<button onclick="pinVideo(${index})">Pin</button>
+<button onclick="editVideo(${index})">Edit</button>
+<button onclick="deleteVideo(${index})">Delete</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
+function playVideo(index){
+
+let id=videos[index].id
+
+document.getElementById("player"+index).innerHTML=`
+
+<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen></iframe>
+
+`
+
+}
+
+function deleteVideo(index){
+
+videos.splice(index,1)
+
+saveVideos()
+showVideos()
+
+}
+
+function editVideo(index){
+
+let t=prompt("Edit title",videos[index].title)
+let c=prompt("Edit category",videos[index].category)
+
+videos[index].title=t
+videos[index].category=c
+
+saveVideos()
+showVideos()
+
+}
+
+function pinVideo(index){
+
+let video=videos.splice(index,1)[0]
+
+videos.unshift(video)
+
+saveVideos()
+showVideos()
+
+}
+
+function searchVideo(){
+
+let text=document.getElementById("search").value.toLowerCase()
+
+document.querySelectorAll(".video").forEach(v=>{
+
+v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
+
+})
+
+}
+
+function filterCategory(cat){
+
+currentCategory=cat
+
+showVideos()
 
 }
 
 function bulkImport(){
 
-let text=document.getElementById("bulkLinks").value
-
-let lines=text.split("\n")
+let lines=document.getElementById("bulkLinks").value.split("\n")
 
 lines.forEach(link=>{
 
@@ -250,121 +367,11 @@ category:"Education"
 saveVideos()
 showVideos()
 
-document.getElementById("bulkLinks").value=""
-
-}
-
-function saveVideos(){
-localStorage.setItem("videos",JSON.stringify(videos))
-}
-
-function showVideos(){
-
-let grid=document.getElementById("videoGrid")
-grid.innerHTML=""
-
-videos.forEach((v,index)=>{
-
-if(currentCategory!="All" && v.category!=currentCategory) return
-
-let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
-
-grid.innerHTML+=`
-
-<div class="video">
-
-<div class="thumbnail" onclick="playVideo(${index})" id="player${index}">
-<img src="${thumb}">
-</div>
-
-<div class="info">
-
-<div class="title">${v.title}</div>
-<div class="category">${v.category}</div>
-
-<button onclick="editVideo(${index})">Edit</button>
-<button onclick="deleteVideo(${index})">Delete</button>
-
-</div>
-
-</div>
-
-`
-
-})
-
-}
-
-function playVideo(index){
-
-let id=videos[index].id
-
-let container=document.getElementById("player"+index)
-
-container.innerHTML=`
-
-<iframe
-src="https://www.youtube.com/embed/${id}?autoplay=1"
-allowfullscreen>
-</iframe>
-
-`
-
-}
-
-function deleteVideo(index){
-
-videos.splice(index,1)
-
-saveVideos()
-showVideos()
-
-}
-
-function editVideo(index){
-
-let newTitle=prompt("Edit title",videos[index].title)
-
-if(newTitle==null) return
-
-let newCategory=prompt("Edit category",videos[index].category)
-
-videos[index].title=newTitle
-videos[index].category=newCategory
-
-saveVideos()
-showVideos()
-
-}
-
-function searchVideo(){
-
-let text=document.getElementById("search").value.toLowerCase()
-
-let items=document.querySelectorAll(".video")
-
-items.forEach(item=>{
-
-let content=item.innerText.toLowerCase()
-
-item.style.display=content.includes(text)?"block":"none"
-
-})
-
-}
-
-function filterCategory(cat){
-
-currentCategory=cat
-showVideos()
-
 }
 
 function exportLibrary(){
 
-let data=JSON.stringify(videos)
-
-let blob=new Blob([data],{type:"application/json"})
+let blob=new Blob([JSON.stringify(videos)],{type:"application/json"})
 
 let url=URL.createObjectURL(blob)
 
