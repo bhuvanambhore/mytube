@@ -29,7 +29,6 @@ padding:20px;
 input,select,textarea{
 padding:10px;
 margin:5px;
-width:250px;
 }
 
 textarea{
@@ -100,6 +99,10 @@ margin-bottom:6px;
 margin-top:10px;
 }
 
+.section{
+margin-top:40px;
+}
+
 </style>
 
 </head>
@@ -133,25 +136,7 @@ MyTube V4
 
 <button onclick="addVideo()">Add Video</button>
 
-<hr>
-
-<h3>Bulk Import YouTube Links</h3>
-
-<textarea id="bulkLinks" placeholder="Paste many YouTube links (one per line)"></textarea>
-
-<br>
-
-<button onclick="bulkImport()">Import Videos</button>
-
-<hr>
-
-<h3>Library Tools</h3>
-
-<button onclick="exportLibrary()">Export Backup</button>
-
-<input type="file" id="importFile" onchange="importLibrary()">
-
-<hr>
+<br><br>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
@@ -171,6 +156,32 @@ MyTube V4
 
 <div class="grid" id="videoGrid"></div>
 
+<!-- BULK IMPORT AT BOTTOM -->
+
+<div class="section">
+
+<h3>Bulk Import YouTube Links</h3>
+
+<textarea id="bulkLinks" placeholder="Paste many YouTube links (one per line)"></textarea>
+
+<br>
+
+<button onclick="bulkImport()">Import Videos</button>
+
+</div>
+
+<!-- LIBRARY TOOLS AT BOTTOM -->
+
+<div class="section">
+
+<h3>Library Tools</h3>
+
+<button onclick="exportLibrary()">Export Backup</button>
+
+<input type="file" id="importFile" onchange="importLibrary()">
+
+</div>
+
 </div>
 
 <script>
@@ -181,7 +192,6 @@ let currentCategory="All"
 function getID(url){
 
 let reg=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-
 let match=url.match(reg)
 
 return match?match[1]:null
@@ -245,15 +255,12 @@ document.getElementById("bulkLinks").value=""
 }
 
 function saveVideos(){
-
 localStorage.setItem("videos",JSON.stringify(videos))
-
 }
 
 function showVideos(){
 
 let grid=document.getElementById("videoGrid")
-
 grid.innerHTML=""
 
 videos.forEach((v,index)=>{
@@ -273,11 +280,9 @@ grid.innerHTML+=`
 <div class="info">
 
 <div class="title">${v.title}</div>
-
 <div class="category">${v.category}</div>
 
 <button onclick="editVideo(${index})">Edit</button>
-
 <button onclick="deleteVideo(${index})">Delete</button>
 
 </div>
