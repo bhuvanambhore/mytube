@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube</title>
+<title>MyTube V4</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -26,9 +26,15 @@ font-size:24px;
 padding:20px;
 }
 
-input,select{
+input,select,textarea{
 padding:10px;
 margin:5px;
+width:250px;
+}
+
+textarea{
+width:520px;
+height:90px;
 }
 
 button{
@@ -42,10 +48,6 @@ border-radius:4px;
 
 button:hover{
 background:#ddd;
-}
-
-.filters{
-margin-top:10px;
 }
 
 .grid{
@@ -94,8 +96,8 @@ color:gray;
 margin-bottom:6px;
 }
 
-.actions button{
-background:#ffefef;
+.filters{
+margin-top:10px;
 }
 
 </style>
@@ -105,10 +107,12 @@ background:#ffefef;
 <body>
 
 <header>
-MyTube
+MyTube V4
 </header>
 
 <div class="container">
+
+<h3>Add Video</h3>
 
 <input id="videoTitle" placeholder="Video title">
 
@@ -129,7 +133,25 @@ MyTube
 
 <button onclick="addVideo()">Add Video</button>
 
-<br><br>
+<hr>
+
+<h3>Bulk Import YouTube Links</h3>
+
+<textarea id="bulkLinks" placeholder="Paste many YouTube links (one per line)"></textarea>
+
+<br>
+
+<button onclick="bulkImport()">Import Videos</button>
+
+<hr>
+
+<h3>Library Tools</h3>
+
+<button onclick="exportLibrary()">Export Backup</button>
+
+<input type="file" id="importFile" onchange="importLibrary()">
+
+<hr>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
@@ -159,6 +181,7 @@ let currentCategory="All"
 function getID(url){
 
 let reg=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+
 let match=url.match(reg)
 
 return match?match[1]:null
@@ -184,18 +207,53 @@ id:id,
 category:category
 })
 
-localStorage.setItem("videos",JSON.stringify(videos))
+saveVideos()
+showVideos()
 
 document.getElementById("videoTitle").value=""
 document.getElementById("videoLink").value=""
 
+}
+
+function bulkImport(){
+
+let text=document.getElementById("bulkLinks").value
+
+let lines=text.split("\n")
+
+lines.forEach(link=>{
+
+let id=getID(link)
+
+if(id){
+
+videos.push({
+title:"Imported Video",
+id:id,
+category:"Education"
+})
+
+}
+
+})
+
+saveVideos()
 showVideos()
+
+document.getElementById("bulkLinks").value=""
+
+}
+
+function saveVideos(){
+
+localStorage.setItem("videos",JSON.stringify(videos))
 
 }
 
 function showVideos(){
 
 let grid=document.getElementById("videoGrid")
+
 grid.innerHTML=""
 
 videos.forEach((v,index)=>{
@@ -218,12 +276,9 @@ grid.innerHTML+=`
 
 <div class="category">${v.category}</div>
 
-<div class="actions">
-
 <button onclick="editVideo(${index})">Edit</button>
-<button onclick="deleteVideo(${index})">Delete</button>
 
-</div>
+<button onclick="deleteVideo(${index})">Delete</button>
 
 </div>
 
@@ -256,8 +311,7 @@ function deleteVideo(index){
 
 videos.splice(index,1)
 
-localStorage.setItem("videos",JSON.stringify(videos))
-
+saveVideos()
 showVideos()
 
 }
@@ -265,6 +319,7 @@ showVideos()
 function editVideo(index){
 
 let newTitle=prompt("Edit title",videos[index].title)
+
 if(newTitle==null) return
 
 let newCategory=prompt("Edit category",videos[index].category)
@@ -272,8 +327,7 @@ let newCategory=prompt("Edit category",videos[index].category)
 videos[index].title=newTitle
 videos[index].category=newCategory
 
-localStorage.setItem("videos",JSON.stringify(videos))
-
+saveVideos()
 showVideos()
 
 }
@@ -298,6 +352,42 @@ function filterCategory(cat){
 
 currentCategory=cat
 showVideos()
+
+}
+
+function exportLibrary(){
+
+let data=JSON.stringify(videos)
+
+let blob=new Blob([data],{type:"application/json"})
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+a.download="mytube_backup.json"
+
+a.click()
+
+}
+
+function importLibrary(){
+
+let file=document.getElementById("importFile").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+videos=JSON.parse(e.target.result)
+
+saveVideos()
+showVideos()
+
+}
+
+reader.readAsText(file)
 
 }
 
