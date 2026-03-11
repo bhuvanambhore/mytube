@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube AI</title>
+<title>MyTube</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -32,7 +32,8 @@ margin:5px;
 }
 
 button{
-padding:10px;
+padding:8px;
+margin:2px;
 cursor:pointer;
 }
 
@@ -62,17 +63,6 @@ height:100%;
 object-fit:cover;
 }
 
-.duration{
-position:absolute;
-bottom:8px;
-right:8px;
-background:black;
-color:white;
-font-size:12px;
-padding:3px 6px;
-border-radius:3px;
-}
-
 iframe{
 width:100%;
 height:170px;
@@ -85,7 +75,6 @@ padding:10px;
 
 .title{
 font-weight:bold;
-font-size:14px;
 margin-bottom:5px;
 }
 
@@ -102,20 +91,29 @@ margin-bottom:6px;
 <body>
 
 <header>
-MyTube AI
+MyTube
 </header>
 
 <div class="container">
 
-<input id="videoTitle" placeholder="Video topic">
+<input id="videoTitle" placeholder="Video title">
 
 <input id="videoLink" placeholder="Paste YouTube link">
 
+<select id="videoCategory">
+
+<option value="Finance">Finance</option>
+<option value="Coding">Coding</option>
+<option value="Education">Education</option>
+<option value="Health Food">Health Food</option>
+<option value="GK">GK</option>
+<option value="Full Body Care">Full Body Care</option>
+<option value="Gym/Yoga">Gym/Yoga</option>
+<option value="Trade">Trade</option>
+
+</select>
+
 <button onclick="addVideo()">Add Video</button>
-
-<br><br>
-
-<input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
 <div class="grid" id="videoGrid"></div>
 
@@ -135,28 +133,11 @@ return match?match[1]:null
 
 }
 
-function detectCategory(title){
-
-title=title.toLowerCase()
-
-if(title.includes("yoga") || title.includes("gym")) return "Gym/Yoga"
-
-if(title.includes("food") || title.includes("recipe")) return "Health Food"
-
-if(title.includes("stock") || title.includes("trade")) return "Trade"
-
-if(title.includes("html") || title.includes("javascript")) return "Coding"
-
-if(title.includes("health")) return "Full Body Care"
-
-return "Education"
-
-}
-
 function addVideo(){
 
 let title=document.getElementById("videoTitle").value
 let url=document.getElementById("videoLink").value
+let category=document.getElementById("videoCategory").value
 
 let id=getID(url)
 
@@ -164,8 +145,6 @@ if(!id){
 alert("Invalid YouTube link")
 return
 }
-
-let category=detectCategory(title)
 
 videos.push({
 title:title,
@@ -197,22 +176,18 @@ grid.innerHTML+=`
 <div class="video">
 
 <div class="thumbnail" onclick="playVideo(${index})" id="player${index}">
-
 <img src="${thumb}">
-
-<div class="duration">YouTube</div>
-
 </div>
 
 <div class="info">
 
 <div class="title">${v.title}</div>
 
-<div class="category">AI Category: ${v.category}</div>
+<div class="category">${v.category}</div>
 
-<button onclick="deleteVideo(${index})">
-Delete
-</button>
+<button onclick="editVideo(${index})">Edit</button>
+
+<button onclick="deleteVideo(${index})">Delete</button>
 
 </div>
 
@@ -234,7 +209,6 @@ container.innerHTML=`
 
 <iframe
 src="https://www.youtube.com/embed/${id}?autoplay=1"
-allow="autoplay; fullscreen"
 allowfullscreen>
 </iframe>
 
@@ -252,19 +226,22 @@ showVideos()
 
 }
 
-function searchVideo(){
+function editVideo(index){
 
-let text=document.getElementById("search").value.toLowerCase()
+let newTitle=prompt("Edit title",videos[index].title)
 
-let items=document.querySelectorAll(".video")
+if(newTitle!=null){
 
-items.forEach(item=>{
+let newCategory=prompt("Edit category",videos[index].category)
 
-let title=item.innerText.toLowerCase()
+videos[index].title=newTitle
+videos[index].category=newCategory
 
-item.style.display=title.includes(text)?"block":"none"
+localStorage.setItem("videos",JSON.stringify(videos))
 
-})
+showVideos()
+
+}
 
 }
 
