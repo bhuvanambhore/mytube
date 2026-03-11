@@ -12,7 +12,7 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f1f1f1;
+background:#f9f9f9;
 }
 
 header{
@@ -38,7 +38,7 @@ cursor:pointer;
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:25px;
 margin-top:20px;
 }
@@ -46,26 +46,25 @@ margin-top:20px;
 .video{
 background:white;
 border-radius:10px;
-box-shadow:0 2px 8px rgba(0,0,0,0.1);
 overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
-.player{
+.thumbnail{
 position:relative;
-width:100%;
-height:170px;
 cursor:pointer;
+height:170px;
 overflow:hidden;
 }
 
-.player img{
+.thumbnail img{
 width:100%;
 height:100%;
 object-fit:cover;
 transition:0.3s;
 }
 
-.player:hover img{
+.thumbnail:hover img{
 transform:scale(1.08);
 }
 
@@ -73,27 +72,44 @@ transform:scale(1.08);
 position:absolute;
 bottom:8px;
 right:8px;
-background:rgba(0,0,0,0.8);
+background:black;
 color:white;
 font-size:12px;
-padding:2px 6px;
+padding:3px 6px;
 border-radius:3px;
 }
 
 iframe{
 width:100%;
-height:100%;
+height:170px;
 border:none;
 }
 
-.video-info{
+.info{
+display:flex;
 padding:10px;
+}
+
+.channel{
+width:36px;
+height:36px;
+border-radius:50%;
+background:#ddd;
+margin-right:10px;
+}
+
+.text{
+flex:1;
 }
 
 .title{
 font-weight:bold;
-font-size:15px;
-margin-bottom:8px;
+font-size:14px;
+margin-bottom:6px;
+}
+
+.delete{
+margin-top:6px;
 }
 
 </style>
@@ -128,11 +144,11 @@ let videos = JSON.parse(localStorage.getItem("videos")) || []
 
 function getID(url){
 
-let reg = /(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+let reg=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
 
-let match = url.match(reg)
+let match=url.match(reg)
 
-return match ? match[1] : null
+return match?match[1]:null
 
 }
 
@@ -170,13 +186,13 @@ grid.innerHTML=""
 
 videos.forEach((v,index)=>{
 
-let thumb="https://img.youtube.com/vi/"+v.id+"/0.jpg"
+let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
 
 grid.innerHTML+=`
 
 <div class="video">
 
-<div class="player" onclick="playVideo(${index})" id="player${index}">
+<div class="thumbnail" onclick="playVideo(${index})" id="player${index}">
 
 <img src="${thumb}">
 
@@ -184,11 +200,19 @@ grid.innerHTML+=`
 
 </div>
 
-<div class="video-info">
+<div class="info">
+
+<div class="channel"></div>
+
+<div class="text">
 
 <div class="title">${v.title}</div>
 
-<button onclick="deleteVideo(${index})">Delete</button>
+<button class="delete" onclick="deleteVideo(${index})">
+Delete
+</button>
+
+</div>
 
 </div>
 
