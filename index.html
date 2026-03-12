@@ -101,12 +101,6 @@ font-size:12px;
 color:#444;
 }
 
-.playlistCards button{
-margin:6px;
-background:#fafafa;
-border:1px solid #ccc;
-}
-
 .section{
 margin-top:30px;
 }
@@ -191,7 +185,7 @@ border-radius:8px;
 
 <h4>Playlists</h4>
 
-<div id="playlistButtons" class="playlistCards"></div>
+<div id="playlistButtons"></div>
 
 </div>
 
@@ -260,21 +254,16 @@ let videos=JSON.parse(localStorage.getItem("videos"))||[]
 let currentCategory="All"
 let currentPlaylist="All"
 let editIndex=null
+let editSelectedPlaylist=""
 
 function saveVideos(){
-
 localStorage.setItem("videos",JSON.stringify(videos))
-
 }
 
 function getID(url){
-
 let r=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-
 let m=url.match(r)
-
 return m?m[1]:null
-
 }
 
 function addVideo(){
@@ -291,7 +280,6 @@ if(!id) return alert("Invalid link")
 videos.push({title,id,category,playlist})
 
 saveVideos()
-
 showVideos()
 
 }
@@ -299,7 +287,6 @@ showVideos()
 function showVideos(){
 
 let grid=document.getElementById("videoGrid")
-
 grid.innerHTML=""
 
 videos.forEach((v,i)=>{
@@ -350,9 +337,7 @@ document.getElementById("player"+i).innerHTML=
 function deleteVideo(i){
 
 videos.splice(i,1)
-
 saveVideos()
-
 showVideos()
 
 }
@@ -360,11 +345,11 @@ showVideos()
 function openEdit(i){
 
 editIndex=i
+editSelectedPlaylist=videos[i].playlist
 
 document.getElementById("editModal").style.display="flex"
 
 document.getElementById("editTitle").value=videos[i].title
-
 document.getElementById("editCategory").value=videos[i].category
 
 generateEditPlaylists()
@@ -372,20 +357,18 @@ generateEditPlaylists()
 }
 
 function closeEdit(){
-
 document.getElementById("editModal").style.display="none"
-
 }
 
 function saveEdit(){
 
 videos[editIndex].title=document.getElementById("editTitle").value
 videos[editIndex].category=document.getElementById("editCategory").value
+videos[editIndex].playlist=editSelectedPlaylist
 
 saveVideos()
 
 closeEdit()
-
 showVideos()
 
 }
@@ -397,11 +380,7 @@ let box=document.getElementById("playlistButtons")
 let lists=["All"]
 
 videos.forEach(v=>{
-
-if(v.playlist && !lists.includes(v.playlist))
-
-lists.push(v.playlist)
-
+if(v.playlist && !lists.includes(v.playlist)) lists.push(v.playlist)
 })
 
 box.innerHTML=""
@@ -421,37 +400,31 @@ let box=document.getElementById("editPlaylists")
 let lists=[]
 
 videos.forEach(v=>{
-
-if(v.playlist && !lists.includes(v.playlist))
-
-lists.push(v.playlist)
-
+if(v.playlist && !lists.includes(v.playlist)) lists.push(v.playlist)
 })
 
 box.innerHTML=""
 
 lists.forEach(p=>{
 
-box.innerHTML+=`<button onclick="videos[editIndex].playlist='${p}'">${p}</button>`
+box.innerHTML+=`<button onclick="selectPlaylist('${p}')">${p}</button>`
 
 })
 
 }
 
+function selectPlaylist(p){
+editSelectedPlaylist=p
+}
+
 function filterCategory(c){
-
 currentCategory=c
-
 showVideos()
-
 }
 
 function filterPlaylist(p){
-
 currentPlaylist=p
-
 showVideos()
-
 }
 
 function searchVideo(){
@@ -459,9 +432,7 @@ function searchVideo(){
 let text=document.getElementById("search").value.toLowerCase()
 
 document.querySelectorAll(".video").forEach(v=>{
-
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
-
 })
 
 }
@@ -471,17 +442,11 @@ function bulkImport(){
 let lines=document.getElementById("bulkLinks").value.split("\n")
 
 lines.forEach(link=>{
-
 let id=getID(link)
-
-if(id)
-
-videos.push({title:"Imported",id,category:"Education",playlist:"Imported"})
-
+if(id) videos.push({title:"Imported",id,category:"Education",playlist:"Imported"})
 })
 
 saveVideos()
-
 showVideos()
 
 }
@@ -495,7 +460,6 @@ let url=URL.createObjectURL(blob)
 let a=document.createElement("a")
 
 a.href=url
-
 a.download="mytube_backup.json"
 
 a.click()
@@ -511,9 +475,7 @@ let reader=new FileReader()
 reader.onload=function(e){
 
 videos=JSON.parse(e.target.result)
-
 saveVideos()
-
 showVideos()
 
 }
