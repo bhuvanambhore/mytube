@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube V7</title>
+<title>MyTube V8</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -19,7 +19,6 @@ header{
 background:#ff0000;
 color:white;
 padding:15px;
-font-size:22px;
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -101,8 +100,63 @@ font-size:12px;
 color:#444;
 }
 
+.playlist-grid{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+margin-top:15px;
+}
+
+.playlist-card{
+width:260px;
+cursor:pointer;
+}
+
+.playlist-thumb{
+position:relative;
+height:150px;
+border-radius:8px;
+overflow:hidden;
+}
+
+.playlist-thumb img{
+width:100%;
+height:100%;
+object-fit:cover;
+filter:brightness(0.7);
+}
+
+.play-overlay{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+color:white;
+font-size:18px;
+font-weight:bold;
+background:rgba(0,0,0,0.6);
+padding:10px 20px;
+border-radius:8px;
+}
+
+.play-count{
+position:absolute;
+bottom:8px;
+right:8px;
+color:white;
+font-size:12px;
+background:rgba(0,0,0,0.6);
+padding:4px 6px;
+border-radius:4px;
+}
+
+.playlist-title{
+margin-top:6px;
+font-weight:bold;
+}
+
 .section{
-margin-top:30px;
+margin-top:35px;
 }
 
 .modal{
@@ -132,9 +186,9 @@ border-radius:8px;
 
 <header>
 
-<div>MyTube V7</div>
+<div>MyTube V8</div>
 
-<input id="search" placeholder="Search Videos" onkeyup="searchVideo()">
+<input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
 </header>
 
@@ -183,9 +237,9 @@ border-radius:8px;
 
 <div class="section">
 
-<h4>Playlists</h4>
+<h3>Playlists</h3>
 
-<div id="playlistButtons"></div>
+<div id="playlistCards" class="playlist-grid"></div>
 
 </div>
 
@@ -337,94 +391,71 @@ document.getElementById("player"+i).innerHTML=
 function deleteVideo(i){
 
 videos.splice(i,1)
-saveVideos()
-showVideos()
-
-}
-
-function openEdit(i){
-
-editIndex=i
-editSelectedPlaylist=videos[i].playlist
-
-document.getElementById("editModal").style.display="flex"
-
-document.getElementById("editTitle").value=videos[i].title
-document.getElementById("editCategory").value=videos[i].category
-
-generateEditPlaylists()
-
-}
-
-function closeEdit(){
-document.getElementById("editModal").style.display="none"
-}
-
-function saveEdit(){
-
-videos[editIndex].title=document.getElementById("editTitle").value
-videos[editIndex].category=document.getElementById("editCategory").value
-videos[editIndex].playlist=editSelectedPlaylist
 
 saveVideos()
-
-closeEdit()
 showVideos()
 
 }
 
 function generatePlaylists(){
 
-let box=document.getElementById("playlistButtons")
+let box=document.getElementById("playlistCards")
 
-let lists=["All"]
+let playlists={}
 
 videos.forEach(v=>{
-if(v.playlist && !lists.includes(v.playlist)) lists.push(v.playlist)
+if(v.playlist){
+if(!playlists[v.playlist]) playlists[v.playlist]=[]
+playlists[v.playlist].push(v)
+}
 })
 
 box.innerHTML=""
 
-lists.forEach(p=>{
+for(let name in playlists){
 
-box.innerHTML+=`<button onclick="filterPlaylist('${p}')">${p}</button>`
+let first=playlists[name][0]
 
-})
+let count=playlists[name].length
+
+let thumb="https://img.youtube.com/vi/"+first.id+"/hqdefault.jpg"
+
+box.innerHTML+=`
+
+<div class="playlist-card" onclick="playPlaylist('${name}')">
+
+<div class="playlist-thumb">
+
+<img src="${thumb}">
+
+<div class="play-overlay">▶ Play all</div>
+
+<div class="play-count">${count} videos</div>
+
+</div>
+
+<div class="playlist-title">${name}</div>
+
+</div>
+
+`
 
 }
 
-function generateEditPlaylists(){
-
-let box=document.getElementById("editPlaylists")
-
-let lists=[]
-
-videos.forEach(v=>{
-if(v.playlist && !lists.includes(v.playlist)) lists.push(v.playlist)
-})
-
-box.innerHTML=""
-
-lists.forEach(p=>{
-
-box.innerHTML+=`<button onclick="selectPlaylist('${p}')">${p}</button>`
-
-})
-
 }
 
-function selectPlaylist(p){
-editSelectedPlaylist=p
-}
+function playPlaylist(name){
 
-function filterCategory(c){
-currentCategory=c
+currentPlaylist=name
+
 showVideos()
-}
 
-function filterPlaylist(p){
-currentPlaylist=p
-showVideos()
+let first=videos.findIndex(v=>v.playlist==name)
+
+setTimeout(()=>{
+if(first>=0) playVideo(first)
+},300)
+
 }
 
 function searchVideo(){
@@ -475,6 +506,7 @@ let reader=new FileReader()
 reader.onload=function(e){
 
 videos=JSON.parse(e.target.result)
+
 saveVideos()
 showVideos()
 
