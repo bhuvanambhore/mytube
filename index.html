@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube V9</title>
+<title>MyTube V10</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -54,6 +54,16 @@ object-fit:cover;
 
 .info{
 padding:10px;
+}
+
+.category{
+font-size:12px;
+color:gray;
+}
+
+.playlist{
+font-size:12px;
+color:#444;
 }
 
 .playlist-grid{
@@ -128,6 +138,16 @@ height:400px;
 border:none;
 }
 
+button{
+padding:8px 12px;
+margin:4px;
+cursor:pointer;
+}
+
+.section{
+margin-top:35px;
+}
+
 </style>
 
 </head>
@@ -136,7 +156,7 @@ border:none;
 
 <header>
 
-<div>MyTube V9</div>
+<div>MyTube V10</div>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
@@ -148,9 +168,39 @@ border:none;
 
 <input id="videoLink" placeholder="YouTube link">
 <input id="videoTitle" placeholder="Video title">
+
+<select id="videoCategory">
+
+<option value="Finance">Finance</option>
+<option value="Coding">Coding</option>
+<option value="Education">Education</option>
+<option value="Health Food">Health Food</option>
+<option value="GK">GK</option>
+<option value="Full Body Care">Full Body Care</option>
+<option value="Gym/Yoga">Gym/Yoga</option>
+<option value="Trade">Trade</option>
+
+</select>
+
 <input id="videoPlaylist" placeholder="Playlist name">
 
 <button onclick="addVideo()">Add</button>
+
+<div class="section">
+
+<h4>Category</h4>
+
+<button onclick="filterCategory('All')">All</button>
+<button onclick="filterCategory('Finance')">Finance</button>
+<button onclick="filterCategory('Coding')">Coding</button>
+<button onclick="filterCategory('Education')">Education</button>
+<button onclick="filterCategory('Health Food')">Health Food</button>
+<button onclick="filterCategory('GK')">GK</button>
+<button onclick="filterCategory('Full Body Care')">Full Body Care</button>
+<button onclick="filterCategory('Gym/Yoga')">Gym/Yoga</button>
+<button onclick="filterCategory('Trade')">Trade</button>
+
+</div>
 
 <h3>Videos</h3>
 
@@ -162,6 +212,8 @@ border:none;
 
 <div id="playlistPage"></div>
 
+<div class="section">
+
 <h3>Bulk Import</h3>
 
 <textarea id="bulkLinks"></textarea>
@@ -169,6 +221,10 @@ border:none;
 <br>
 
 <button onclick="bulkImport()">Import</button>
+
+</div>
+
+<div class="section">
 
 <h3>Library Tools</h3>
 
@@ -178,9 +234,12 @@ border:none;
 
 </div>
 
+</div>
+
 <script>
 
 let videos=JSON.parse(localStorage.getItem("videos"))||[]
+let currentCategory="All"
 
 function saveVideos(){
 localStorage.setItem("videos",JSON.stringify(videos))
@@ -196,13 +255,14 @@ function addVideo(){
 
 let title=document.getElementById("videoTitle").value
 let url=document.getElementById("videoLink").value
+let category=document.getElementById("videoCategory").value
 let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
 if(!id) return alert("Invalid link")
 
-videos.push({title,id,playlist})
+videos.push({title,id,category,playlist})
 
 saveVideos()
 
@@ -218,13 +278,15 @@ grid.innerHTML=""
 
 videos.forEach((v,i)=>{
 
+if(currentCategory!="All" && v.category!=currentCategory) return
+
 let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
 
 grid.innerHTML+=`
 
 <div class="video">
 
-<div class="thumbnail">
+<div class="thumbnail" onclick="playVideo('${v.id}')">
 <img src="${thumb}">
 </div>
 
@@ -232,7 +294,9 @@ grid.innerHTML+=`
 
 <b>${v.title}</b><br>
 
-${v.playlist}
+<div class="category">${v.category}</div>
+
+<div class="playlist">${v.playlist}</div>
 
 </div>
 
@@ -243,6 +307,35 @@ ${v.playlist}
 })
 
 generatePlaylists()
+
+}
+
+function playVideo(id){
+
+let player=document.createElement("iframe")
+
+player.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+
+player.allowFullscreen=true
+
+player.style.position="fixed"
+player.style.top="0"
+player.style.left="0"
+player.style.width="100%"
+player.style.height="100%"
+player.style.zIndex="9999"
+
+document.body.appendChild(player)
+
+player.requestFullscreen?.()
+
+}
+
+function filterCategory(cat){
+
+currentCategory=cat
+
+showVideos()
 
 }
 
@@ -311,7 +404,7 @@ page.innerHTML=`
 
 `
 
-playVideo(first.id)
+playVideoInline(first.id)
 
 let q=document.getElementById("queue")
 
@@ -321,7 +414,7 @@ list.forEach((v,i)=>{
 
 q.innerHTML+=`
 
-<div class="queue-item" onclick="playVideo('${v.id}')">
+<div class="queue-item" onclick="playVideoInline('${v.id}')">
 
 ${i+1}. ${v.title}
 
@@ -333,7 +426,7 @@ ${i+1}. ${v.title}
 
 }
 
-function playVideo(id){
+function playVideoInline(id){
 
 document.getElementById("player").innerHTML=
 '<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1"></iframe>'
@@ -345,9 +438,7 @@ function searchVideo(){
 let text=document.getElementById("search").value.toLowerCase()
 
 document.querySelectorAll(".video").forEach(v=>{
-
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
-
 })
 
 }
@@ -358,7 +449,7 @@ let lines=document.getElementById("bulkLinks").value.split("\n")
 
 lines.forEach(link=>{
 let id=getID(link)
-if(id) videos.push({title:"Imported",id,playlist:"Imported"})
+if(id) videos.push({title:"Imported",id,category:"Education",playlist:"Imported"})
 })
 
 saveVideos()
