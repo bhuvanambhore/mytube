@@ -314,7 +314,7 @@ function playVideo(id){
 
 let player=document.createElement("iframe")
 
-player.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+player.src="https://www.youtube.com/embed/"+id+"?autoplay=1&enablejsapi=1"
 
 player.allowFullscreen=true
 
@@ -325,9 +325,27 @@ player.style.width="100%"
 player.style.height="100%"
 player.style.zIndex="9999"
 
+player.id="fullscreenPlayer"
+
 document.body.appendChild(player)
 
+/* request fullscreen */
+
+setTimeout(()=>{
 player.requestFullscreen?.()
+},200)
+
+/* listen for exit ESC */
+
+document.addEventListener("keydown",function(e){
+
+if(e.key==="Escape"){
+
+document.getElementById("fullscreenPlayer")?.remove()
+
+}
+
+})
 
 }
 
