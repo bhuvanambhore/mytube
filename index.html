@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube V11</title>
+<title>MyTube V12</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -116,6 +116,13 @@ padding:4px 6px;
 border-radius:4px;
 }
 
+.player iframe{
+width:100%;
+height:70vh;
+border:none;
+border-radius:8px;
+}
+
 .queue{
 margin-top:20px;
 background:white;
@@ -124,9 +131,18 @@ border-radius:8px;
 }
 
 .queue-item{
+display:flex;
+gap:10px;
+align-items:center;
 padding:8px;
 cursor:pointer;
 border-bottom:1px solid #eee;
+}
+
+.queue-item img{
+width:120px;
+height:70px;
+object-fit:cover;
 }
 
 .queue-item:hover{
@@ -151,7 +167,7 @@ margin-top:35px;
 
 <header>
 
-<div>MyTube V11</div>
+<div>MyTube V12</div>
 
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
@@ -260,6 +276,7 @@ if(!id) return alert("Invalid link")
 videos.push({title,id,category,playlist})
 
 saveVideos()
+
 showVideos()
 
 }
@@ -270,7 +287,7 @@ let grid=document.getElementById("videoGrid")
 
 grid.innerHTML=""
 
-videos.forEach((v,i)=>{
+videos.forEach(v=>{
 
 if(currentCategory!="All" && v.category!=currentCategory) return
 
@@ -301,65 +318,6 @@ grid.innerHTML+=`
 })
 
 generatePlaylists()
-
-}
-
-function playVideo(id){
-
-let container=document.createElement("div")
-container.id="fullscreenContainer"
-
-container.style.position="fixed"
-container.style.top="0"
-container.style.left="0"
-container.style.width="100%"
-container.style.height="100%"
-container.style.background="black"
-container.style.zIndex="9999"
-
-let iframe=document.createElement("iframe")
-
-iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
-
-iframe.allowFullscreen=true
-iframe.style.width="100%"
-iframe.style.height="100%"
-iframe.style.border="none"
-
-let close=document.createElement("button")
-
-close.innerHTML="✕ Close"
-close.style.position="absolute"
-close.style.top="15px"
-close.style.right="15px"
-close.style.padding="10px 14px"
-close.style.background="red"
-close.style.color="white"
-close.style.border="none"
-close.style.cursor="pointer"
-
-close.onclick=exitPlayer
-
-container.appendChild(iframe)
-container.appendChild(close)
-
-document.body.appendChild(container)
-
-container.requestFullscreen?.()
-
-document.addEventListener("keydown",function(e){
-if(e.key==="Escape") exitPlayer()
-})
-
-function exitPlayer(){
-
-document.getElementById("fullscreenContainer")?.remove()
-
-if(document.fullscreenElement){
-document.exitFullscreen()
-}
-
-}
 
 }
 
@@ -444,11 +402,21 @@ q.innerHTML=""
 
 list.forEach((v,i)=>{
 
+let thumb="https://img.youtube.com/vi/"+v.id+"/mqdefault.jpg"
+
 q.innerHTML+=`
 
 <div class="queue-item" onclick="playVideoInline('${v.id}')">
 
-${i+1}. ${v.title}
+<img src="${thumb}">
+
+<div>
+
+<b>${i+1}. ${v.title}</b><br>
+
+${v.category}
+
+</div>
 
 </div>
 
@@ -461,7 +429,68 @@ ${i+1}. ${v.title}
 function playVideoInline(id){
 
 document.getElementById("player").innerHTML=
-'<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1"></iframe>'
+`
+<iframe
+src="https://www.youtube.com/embed/${id}?autoplay=1"
+allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+allowfullscreen>
+</iframe>
+`
+
+}
+
+function playVideo(id){
+
+let container=document.createElement("div")
+
+container.style.position="fixed"
+container.style.top="0"
+container.style.left="0"
+container.style.width="100%"
+container.style.height="100%"
+container.style.background="black"
+container.style.zIndex="9999"
+
+let iframe=document.createElement("iframe")
+
+iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+
+iframe.allowFullscreen=true
+iframe.allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+
+iframe.style.width="100%"
+iframe.style.height="100%"
+iframe.style.border="none"
+
+let close=document.createElement("button")
+
+close.innerHTML="✕ Close"
+close.style.position="absolute"
+close.style.top="15px"
+close.style.right="15px"
+close.style.padding="10px 14px"
+close.style.background="red"
+close.style.color="white"
+close.style.border="none"
+
+close.onclick=()=>{
+
+container.remove()
+
+if(document.fullscreenElement) document.exitFullscreen()
+
+}
+
+container.appendChild(iframe)
+container.appendChild(close)
+
+document.body.appendChild(container)
+
+container.requestFullscreen?.()
+
+document.addEventListener("keydown",e=>{
+if(e.key==="Escape") close.onclick()
+})
 
 }
 
