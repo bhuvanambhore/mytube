@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>MyTube V17</title>
+<title>MyTube V17.2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -22,35 +22,37 @@ header input{padding:8px;width:220px}
 .thumbnail img{width:100%;height:160px;object-fit:cover;cursor:pointer}
 
 .info{padding:10px}
+
 .category{font-size:12px;color:#777}
 .playlists{font-size:12px;color:#999}
 
 .preview img{width:260px;border-radius:8px;margin-top:10px}
 
-.favorite{font-size:18px;cursor:pointer;color:gold}
+.favorite{font-size:18px;color:gold;cursor:pointer}
 
 .playlist-grid{display:flex;gap:20px;flex-wrap:wrap;margin-top:20px}
 
 .playlist-card{width:260px;cursor:pointer}
+
 .playlist-thumb{position:relative;height:150px;border-radius:8px;overflow:hidden}
+
 .playlist-thumb img{width:100%;height:100%;object-fit:cover;filter:brightness(0.7)}
 
 .overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.6);color:white;padding:6px 12px;border-radius:6px}
+
 .count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);color:white;padding:4px 6px;border-radius:4px;font-size:12px}
 
 .player iframe{width:100%;height:70vh;border:none}
 
 .queue{margin-top:20px;background:white;padding:10px;border-radius:8px}
-.dark .queue{background:#1e1e1e}
 
 .queue-item{display:flex;gap:10px;padding:8px;cursor:pointer;border-bottom:1px solid #eee}
+
 .queue-item img{width:120px;height:70px;object-fit:cover}
 
 .section{margin-top:35px}
 
 button{padding:6px 10px;margin-top:6px;cursor:pointer}
-
-.progress{height:4px;background:red;width:0%}
 
 </style>
 </head>
@@ -59,7 +61,7 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 
 <header>
 
-<div>MyTube V17</div>
+<div>MyTube V17.2</div>
 
 <div>
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
@@ -72,7 +74,7 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 
 <h3>Add Video</h3>
 
-<input id="videoLink" placeholder="YouTube link" oninput="previewVideo()">
+<input id="videoLink" placeholder="Paste YouTube link" oninput="previewVideo()">
 <input id="videoTitle" placeholder="Video title">
 
 <select id="videoCategory">
@@ -90,16 +92,6 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 <button onclick="addVideo()">Add</button>
 
 <div id="preview" class="preview"></div>
-
-<div class="section">
-<h3>Continue Watching</h3>
-<div id="continueGrid" class="grid"></div>
-</div>
-
-<div class="section">
-<h3>Trending</h3>
-<div id="trendingGrid" class="grid"></div>
-</div>
 
 <div class="section">
 <h4>Category</h4>
@@ -121,11 +113,13 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 
 <h3>Playlists</h3>
 <div id="playlistCards" class="playlist-grid"></div>
+
 <div id="playlistPage"></div>
 
 <div class="section">
 <h3>Bulk Import</h3>
-<textarea id="bulkLinks"></textarea><br>
+<textarea id="bulkLinks"></textarea>
+<br>
 <button onclick="bulkImport()">Import</button>
 </div>
 
@@ -133,6 +127,7 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 <h3>Library Tools</h3>
 <button onclick="exportLibrary()">Export Backup</button>
 <input type="file" id="importFile" onchange="importLibrary()">
+<button onclick="resetLibrary()">Reset Library</button>
 </div>
 
 </div>
@@ -141,52 +136,67 @@ button{padding:6px 10px;margin-top:6px;cursor:pointer}
 
 let videos=JSON.parse(localStorage.getItem("videos"))||[]
 let currentCategory="All"
-let currentPlaylistQueue=[]
-let currentIndex=0
 
-function saveVideos(){localStorage.setItem("videos",JSON.stringify(videos))}
+function saveVideos(){
+localStorage.setItem("videos",JSON.stringify(videos))
+}
 
 function getID(url){
-let r=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-let m=url.match(r)
-return m?m[1]:null
+
+let reg=/((youtu\.be\/)|(v=)|(\/shorts\/))([a-zA-Z0-9_-]{11})/
+let match=url.match(reg)
+
+if(match){return match[5]}
+return null
+
 }
 
 function previewVideo(){
 
 let url=document.getElementById("videoLink").value
 let id=getID(url)
+
 if(!id)return
 
 let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
+
 document.getElementById("preview").innerHTML=`<img src="${thumb}">`
 
 fetch("https://noembed.com/embed?url="+url)
 .then(r=>r.json())
-.then(d=>{document.getElementById("videoTitle").value=d.title})
+.then(data=>{
+document.getElementById("videoTitle").value=data.title
+})
 
 }
 
 function addVideo(){
 
-let title=document.getElementById("videoTitle").value
-let url=document.getElementById("videoLink").value
+let url=document.getElementById("videoLink").value.trim()
+let title=document.getElementById("videoTitle").value.trim()
 let category=document.getElementById("videoCategory").value
-let playlists=document.getElementById("videoPlaylist").value.split(",").map(p=>p.trim())
+
+let playlists=document.getElementById("videoPlaylist").value
+.split(",").map(p=>p.trim()).filter(p=>p)
 
 let id=getID(url)
+
+if(!id){alert("Invalid YouTube link");return}
+
+if(!title){title="Untitled Video"}
 
 let existing=videos.find(v=>v.id===id)
 
 if(existing){
 
 playlists.forEach(p=>{
-if(!existing.playlists.includes(p)) existing.playlists.push(p)
+if(!existing.playlists.includes(p)){existing.playlists.push(p)}
 })
 
 saveVideos()
 showVideos()
 return
+
 }
 
 videos.push({
@@ -196,34 +206,12 @@ category,
 playlists,
 favorite:false,
 watched:false,
-progress:0,
 views:0
 })
 
 saveVideos()
 showVideos()
 
-}
-
-function toggleFavorite(i){
-videos[i].favorite=!videos[i].favorite
-saveVideos()
-showVideos()
-}
-
-function deleteVideo(i){
-if(confirm("Delete video?")){
-videos.splice(i,1)
-saveVideos()
-showVideos()
-}
-}
-
-function editVideo(i){
-let t=prompt("Edit title",videos[i].title)
-if(t)videos[i].title=t
-saveVideos()
-showVideos()
 }
 
 function showVideos(){
@@ -241,9 +229,8 @@ grid.innerHTML+=`
 
 <div class="video">
 
-<div class="thumbnail" onclick="playVideo('${v.id}',${i})">
+<div class="thumbnail" onclick="playVideo('${v.id}')">
 <img src="${thumb}">
-<div class="progress" style="width:${v.progress}%"></div>
 </div>
 
 <div class="info">
@@ -266,16 +253,10 @@ grid.innerHTML+=`
 })
 
 generatePlaylists()
-generateContinueWatching()
-generateTrending()
 
 }
 
-function playVideo(id,index){
-
-videos[index].views++
-videos[index].watched=true
-saveVideos()
+function playVideo(id){
 
 let container=document.createElement("div")
 
@@ -288,7 +269,8 @@ container.style.background="black"
 container.style.zIndex="9999"
 
 let iframe=document.createElement("iframe")
-iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1&enablejsapi=1"
+
+iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
 iframe.allow="autoplay; fullscreen"
 iframe.allowFullscreen=true
 iframe.style.width="100%"
@@ -296,6 +278,7 @@ iframe.style.height="100%"
 iframe.style.border="none"
 
 let close=document.createElement("button")
+
 close.innerHTML="✕ Close"
 close.style.position="absolute"
 close.style.top="20px"
@@ -313,6 +296,27 @@ document.body.appendChild(container)
 
 container.requestFullscreen?.()
 
+}
+
+function toggleFavorite(i){
+videos[i].favorite=!videos[i].favorite
+saveVideos()
+showVideos()
+}
+
+function editVideo(i){
+let t=prompt("Edit title",videos[i].title)
+if(t)videos[i].title=t
+saveVideos()
+showVideos()
+}
+
+function deleteVideo(i){
+if(confirm("Delete video?")){
+videos.splice(i,1)
+saveVideos()
+showVideos()
+}
 }
 
 function generatePlaylists(){
@@ -353,9 +357,9 @@ box.innerHTML+=`
 function openPlaylist(name){
 
 let list=videos.filter(v=>v.playlists.includes(name))
-currentPlaylistQueue=list
 
 let page=document.getElementById("playlistPage")
+
 page.innerHTML=`<h2>${name}</h2><div class="player" id="player"></div><div class="queue" id="queue"></div>`
 
 playVideoInline(list[0].id)
@@ -381,53 +385,8 @@ q.innerHTML+=`
 }
 
 function playVideoInline(id){
-document.getElementById("player").innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen></iframe>`
-}
-
-function generateContinueWatching(){
-
-let box=document.getElementById("continueGrid")
-box.innerHTML=""
-
-videos.filter(v=>v.progress>0 && v.progress<90).forEach(v=>{
-
-let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
-
-box.innerHTML+=`
-<div class="video">
-<div class="thumbnail" onclick="playVideoInline('${v.id}')">
-<img src="${thumb}">
-</div>
-<div class="info">${v.title}</div>
-</div>
-`
-
-})
-
-}
-
-function generateTrending(){
-
-let box=document.getElementById("trendingGrid")
-box.innerHTML=""
-
-let sorted=[...videos].sort((a,b)=>b.views-a.views).slice(0,6)
-
-sorted.forEach(v=>{
-
-let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
-
-box.innerHTML+=`
-<div class="video">
-<div class="thumbnail" onclick="playVideoInline('${v.id}')">
-<img src="${thumb}">
-</div>
-<div class="info">${v.title}</div>
-</div>
-`
-
-})
-
+document.getElementById("player").innerHTML=
+`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen></iframe>`
 }
 
 function filterCategory(cat){
@@ -459,7 +418,6 @@ category:"Education",
 playlists:["Imported"],
 favorite:false,
 watched:false,
-progress:0,
 views:0
 })
 }
@@ -496,6 +454,13 @@ showVideos()
 
 reader.readAsText(file)
 
+}
+
+function resetLibrary(){
+if(confirm("Clear all videos?")){
+localStorage.clear()
+location.reload()
+}
 }
 
 function toggleDark(){
