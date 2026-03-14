@@ -3,7 +3,7 @@
 
 <head>
 
-<title>MyTube V15</title>
+<title>MyTube V16</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -71,8 +71,8 @@ font-size:12px;
 color:gray;
 }
 
-.playlist{
-font-size:12px;
+.progress{
+font-size:11px;
 color:#999;
 }
 
@@ -171,6 +171,17 @@ object-fit:cover;
 margin-top:35px;
 }
 
+.stats{
+margin-top:20px;
+background:white;
+padding:15px;
+border-radius:8px;
+}
+
+.dark .stats{
+background:#1e1e1e;
+}
+
 </style>
 
 </head>
@@ -179,7 +190,7 @@ margin-top:35px;
 
 <header>
 
-<div>MyTube V15</div>
+<div>MyTube V16</div>
 
 <div>
 
@@ -200,7 +211,6 @@ margin-top:35px;
 <input id="videoTitle" placeholder="Video title">
 
 <select id="videoCategory">
-
 <option>Finance</option>
 <option>Coding</option>
 <option>Education</option>
@@ -209,7 +219,6 @@ margin-top:35px;
 <option>Full Body Care</option>
 <option>Gym/Yoga</option>
 <option>Trade</option>
-
 </select>
 
 <input id="videoPlaylist" placeholder="Playlist name">
@@ -227,6 +236,14 @@ margin-top:35px;
 <div id="playlistCards" class="playlist-grid"></div>
 
 <div id="playlistPage"></div>
+
+<div class="stats">
+
+<h3>Library Statistics</h3>
+
+<div id="stats"></div>
+
+</div>
 
 <div class="section">
 
@@ -255,9 +272,14 @@ margin-top:35px;
 <script>
 
 let videos = JSON.parse(localStorage.getItem("videos")) || []
+let watchProgress = JSON.parse(localStorage.getItem("progress")) || []
 
 function saveVideos(){
 localStorage.setItem("videos",JSON.stringify(videos))
+}
+
+function saveProgress(){
+localStorage.setItem("progress",JSON.stringify(watchProgress))
 }
 
 function getID(url){
@@ -265,8 +287,6 @@ let r=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
 let m=url.match(r)
 return m?m[1]:null
 }
-
-/* PREVIEW */
 
 function previewVideo(){
 
@@ -287,8 +307,6 @@ document.getElementById("videoTitle").value=data.title
 
 }
 
-/* ADD VIDEO */
-
 function addVideo(){
 
 let title=document.getElementById("videoTitle").value
@@ -298,16 +316,12 @@ let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
-/* block duplicate in same playlist */
-
 let duplicate=videos.find(v=>v.id===id && v.playlist===playlist)
 
 if(duplicate){
 alert("Video already exists in this playlist")
 return
 }
-
-/* allow across playlists */
 
 videos.push({title,id,category,playlist})
 
@@ -316,8 +330,6 @@ saveVideos()
 showVideos()
 
 }
-
-/* UNIQUE VIDEO GRID */
 
 function showVideos(){
 
@@ -333,6 +345,8 @@ Object.values(unique).forEach(v=>{
 
 let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
 
+let progress=watchProgress.find(p=>p.id===v.id)
+
 grid.innerHTML+=`
 
 <div class="video">
@@ -347,6 +361,10 @@ grid.innerHTML+=`
 
 <div class="category">${v.category}</div>
 
+<div class="progress">
+${progress ? "Watched" : "Not watched"}
+</div>
+
 <button onclick="editVideo('${v.id}')">Edit</button>
 <button onclick="deleteVideo('${v.id}')">Delete</button>
 
@@ -359,10 +377,9 @@ grid.innerHTML+=`
 })
 
 generatePlaylists()
+updateStats()
 
 }
-
-/* DELETE */
 
 function deleteVideo(id){
 
@@ -373,8 +390,6 @@ saveVideos()
 showVideos()
 
 }
-
-/* EDIT */
 
 function editVideo(id){
 
@@ -390,9 +405,11 @@ showVideos()
 
 }
 
-/* PLAYER */
-
 function playVideo(id){
+
+watchProgress.push({id:id})
+
+saveProgress()
 
 let container=document.createElement("div")
 
@@ -429,8 +446,6 @@ container.appendChild(close)
 document.body.appendChild(container)
 
 }
-
-/* PLAYLISTS */
 
 function generatePlaylists(){
 
@@ -476,8 +491,6 @@ box.innerHTML+=`
 }
 
 }
-
-/* PLAYLIST PAGE */
 
 function openPlaylist(name){
 
@@ -530,26 +543,35 @@ q.innerHTML+=`
 function playVideoInline(id){
 
 document.getElementById("player").innerHTML=
-
 `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`
 
 }
 
-/* SEARCH */
+function updateStats(){
+
+let totalVideos=[...new Set(videos.map(v=>v.id))].length
+
+let totalPlaylists=[...new Set(videos.map(v=>v.playlist))].length
+
+document.getElementById("stats").innerHTML=`
+
+Total Unique Videos: ${totalVideos} <br>
+Total Playlists: ${totalPlaylists} <br>
+Total Entries: ${videos.length}
+
+`
+
+}
 
 function searchVideo(){
 
 let text=document.getElementById("search").value.toLowerCase()
 
 document.querySelectorAll(".video").forEach(v=>{
-
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
-
 })
 
 }
-
-/* BULK IMPORT */
 
 function bulkImport(){
 
@@ -562,15 +584,10 @@ let id=getID(link)
 if(id){
 
 videos.push({
-
 title:"Imported",
-
 id:id,
-
 category:"Education",
-
 playlist:"Imported"
-
 })
 
 }
@@ -582,8 +599,6 @@ saveVideos()
 showVideos()
 
 }
-
-/* BACKUP */
 
 function exportLibrary(){
 
@@ -621,12 +636,8 @@ reader.readAsText(file)
 
 }
 
-/* DARK MODE */
-
 function toggleDark(){
-
 document.body.classList.toggle("dark")
-
 }
 
 showVideos()
