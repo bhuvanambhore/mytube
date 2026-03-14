@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyTube V20</title>
+<title>MyTube V21</title>
 
 <style>
 
@@ -46,10 +46,21 @@ background:white;
 border-radius:8px;
 overflow:hidden;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
+position:relative;
 }
 
 .dark .video{
 background:#1e1e1e;
+}
+
+.pin{
+position:absolute;
+top:6px;
+right:6px;
+background:gold;
+padding:4px 6px;
+font-size:12px;
+border-radius:4px;
 }
 
 .thumbnail img{
@@ -83,6 +94,14 @@ cursor:pointer;
 width:260px;
 border-radius:8px;
 margin-top:10px;
+}
+
+.filters{
+margin:10px 0;
+}
+
+.filters button{
+margin-right:6px;
 }
 
 .playlist-grid{
@@ -199,8 +218,7 @@ margin-bottom:10px;
 <body>
 
 <header>
-
-<div>MyTube V20</div>
+<div>MyTube V21</div>
 
 <div>
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
@@ -233,6 +251,16 @@ margin-bottom:10px;
 
 <div id="preview" class="preview"></div>
 
+<h3>Filters</h3>
+
+<div class="filters" id="categoryFilters"></div>
+
+Sort:
+<select onchange="setSort(this.value)">
+<option value="new">Newest</option>
+<option value="az">A-Z</option>
+</select>
+
 <h3>Videos</h3>
 <div id="videoGrid" class="grid"></div>
 
@@ -247,20 +275,17 @@ margin-bottom:10px;
 </div>
 
 <h3>Bulk Import</h3>
-
 <textarea id="bulkLinks"></textarea>
 <br>
 <button onclick="bulkImport()">Import</button>
 
 <h3>Backup</h3>
-
 <button onclick="exportLibrary()">Export Backup</button>
-<input type="file" id="importFile" onchange="importLibrary()">
+<input type="file" onchange="importLibrary(this.files[0])">
 
 </div>
 
 <div id="editPopup" class="popup">
-
 <div class="popup-box">
 
 <h3>Edit Video</h3>
@@ -284,21 +309,18 @@ margin-bottom:10px;
 <button onclick="closePopup()">Cancel</button>
 
 </div>
-
 </div>
 
 <script>
 
-let videos = JSON.parse(localStorage.getItem("videos")) || []
-let watchProgress = JSON.parse(localStorage.getItem("progress")) || []
-let editingID = null
+let videos=JSON.parse(localStorage.getItem("videos"))||[]
+let progress=JSON.parse(localStorage.getItem("progress"))||[]
+let editingID=null
+let sortMode="new"
+let filterCategory="All"
 
-function saveVideos(){
+function save(){
 localStorage.setItem("videos",JSON.stringify(videos))
-}
-
-function saveProgress(){
-localStorage.setItem("progress",JSON.stringify(watchProgress))
 }
 
 function getID(url){
@@ -309,73 +331,70 @@ return m?m[1]:null
 
 function previewVideo(){
 
-let url=document.getElementById("videoLink").value
+let url=videoLink.value
 let id=getID(url)
+if(!id)return
 
-if(!id) return
-
-let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
-
-document.getElementById("preview").innerHTML=`<img src="${thumb}">`
+preview.innerHTML=`<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg">`
 
 fetch("https://noembed.com/embed?url="+url)
 .then(r=>r.json())
-.then(data=>{
-document.getElementById("videoTitle").value=data.title
-})
+.then(d=>videoTitle.value=d.title)
 
 }
 
 function addVideo(){
 
-let title=document.getElementById("videoTitle").value
-let url=document.getElementById("videoLink").value
-let category=document.getElementById("videoCategory").value
-let playlist=document.getElementById("videoPlaylist").value
+let id=getID(videoLink.value)
+let title=videoTitle.value
+let cat=videoCategory.value
+let pl=videoPlaylist.value.trim()
 
-let id=getID(url)
+if(!pl||pl==="()"||pl==="undefined")pl="General"
 
-if(!playlist || playlist.trim()==="" || playlist==="undefined" || playlist==="()"){
-playlist="General"
-}
-
-let duplicate=videos.find(v=>v.id===id && v.playlist===playlist)
-
-if(duplicate){
-alert("Video already exists in this playlist")
+if(videos.find(v=>v.id===id&&v.playlist===pl)){
+alert("Duplicate in playlist")
 return
 }
 
-videos.push({title,id,category,playlist})
+videos.push({id,title,category:cat,playlist:pl,pin:false,date:Date.now()})
 
-saveVideos()
+save()
 
-showVideos()
+show()
 
 }
 
-function showVideos(){
+function show(){
 
 let grid=document.getElementById("videoGrid")
 
-grid.innerHTML=""
-
 let unique={}
-
 videos.forEach(v=>unique[v.id]=v)
 
-Object.values(unique).forEach(v=>{
+let list=Object.values(unique)
 
-let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
+if(filterCategory!="All"){
+list=list.filter(v=>v.category===filterCategory)
+}
 
-let progress=watchProgress.find(p=>p.id===v.id)
+if(sortMode==="az"){
+list.sort((a,b)=>a.title.localeCompare(b.title))
+}
+
+list.sort((a,b)=>b.pin-a.pin)
+
+grid.innerHTML=""
+
+list.forEach(v=>{
 
 grid.innerHTML+=`
-
 <div class="video">
 
+${v.pin?'<div class="pin">PIN</div>':''}
+
 <div class="thumbnail" onclick="playVideo('${v.id}')">
-<img src="${thumb}">
+<img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg">
 </div>
 
 <div class="info">
@@ -384,22 +403,31 @@ grid.innerHTML+=`
 
 <div class="category">${v.category}</div>
 
-<div class="progress">${progress?"Watched":"Not watched"}</div>
+<div class="progress">
+${progress.find(p=>p.id===v.id)?"Watched":"Not watched"}
+</div>
 
 <button onclick="openEdit('${v.id}')">Edit</button>
 <button onclick="deleteVideo('${v.id}')">Delete</button>
+<button onclick="pinVideo('${v.id}')">Pin</button>
 
 </div>
 
 </div>
-
 `
-
 })
 
+generateFilters()
 generatePlaylists()
 updateStats()
 
+}
+
+function pinVideo(id){
+let v=videos.find(v=>v.id===id)
+v.pin=!v.pin
+save()
+show()
 }
 
 function openEdit(id){
@@ -408,11 +436,11 @@ let v=videos.find(v=>v.id===id)
 
 editingID=id
 
-document.getElementById("editTitle").value=v.title
-document.getElementById("editCategory").value=v.category
-document.getElementById("editPlaylist").value=v.playlist
+editTitle.value=v.title
+editCategory.value=v.category
+editPlaylist.value=v.playlist
 
-document.getElementById("editPopup").style.display="flex"
+editPopup.style.display="flex"
 
 }
 
@@ -420,126 +448,111 @@ function saveEdit(){
 
 let v=videos.find(v=>v.id===editingID)
 
-v.title=document.getElementById("editTitle").value
-v.category=document.getElementById("editCategory").value
+v.title=editTitle.value
+v.category=editCategory.value
+v.playlist=editPlaylist.value||"General"
 
-let p=document.getElementById("editPlaylist").value
-
-if(!p || p.trim()==="" || p==="undefined" || p==="()"){
-p="General"
-}
-
-v.playlist=p
-
-saveVideos()
+save()
 
 closePopup()
 
-showVideos()
+show()
 
 }
 
 function closePopup(){
-document.getElementById("editPopup").style.display="none"
+editPopup.style.display="none"
 }
 
 function deleteVideo(id){
 
-if(!confirm("Delete video?")) return
+if(!confirm("Delete video?"))return
 
-videos = videos.filter(v=>v.id!==id)
+videos=videos.filter(v=>v.id!==id)
 
-saveVideos()
+save()
 
-showVideos()
+show()
 
 }
 
 function playVideo(id){
 
-watchProgress.push({id:id})
+progress.push({id})
 
-saveProgress()
+localStorage.setItem("progress",JSON.stringify(progress))
 
-let container=document.createElement("div")
+let d=document.createElement("div")
 
-container.style.position="fixed"
-container.style.top="0"
-container.style.left="0"
-container.style.width="100%"
-container.style.height="100%"
-container.style.background="black"
-container.style.zIndex="9999"
+d.style.position="fixed"
+d.style.top="0"
+d.style.left="0"
+d.style.width="100%"
+d.style.height="100%"
+d.style.background="black"
 
-let iframe=document.createElement("iframe")
+d.innerHTML=`
+<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" style="width:100%;height:100%"></iframe>
+<button style="position:absolute;top:20px;right:20px" onclick="this.parentElement.remove()">Close</button>
+`
 
-iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
-iframe.style.width="100%"
-iframe.style.height="100%"
+document.body.appendChild(d)
 
-let close=document.createElement("button")
+}
 
-close.innerHTML="✕ Close"
+function generateFilters(){
 
-close.style.position="absolute"
-close.style.top="20px"
-close.style.right="20px"
+let cats=["All",...new Set(videos.map(v=>v.category))]
 
-close.onclick=()=>container.remove()
+let box=document.getElementById("categoryFilters")
 
-container.appendChild(iframe)
-container.appendChild(close)
+box.innerHTML=""
 
-document.body.appendChild(container)
+cats.forEach(c=>{
+box.innerHTML+=`<button onclick="setFilter('${c}')">${c}</button>`
+})
 
+}
+
+function setFilter(c){
+filterCategory=c
+show()
+}
+
+function setSort(s){
+sortMode=s
+show()
 }
 
 function generatePlaylists(){
 
-let playlists={}
+let map={}
 
 videos.forEach(v=>{
 
-let name=v.playlist
+if(!v.playlist||v.playlist==="()"||v.playlist==="undefined")return
 
-if(!name || name==="undefined" || name==="()" || name.trim()==="") return
+if(!map[v.playlist])map[v.playlist]=[]
 
-if(!playlists[name]) playlists[name]=[]
-
-playlists[name].push(v)
+map[v.playlist].push(v)
 
 })
 
-let box=document.getElementById("playlistCards")
+playlistCards.innerHTML=""
 
-box.innerHTML=""
+for(let p in map){
 
-for(let name in playlists){
+let first=map[p][0]
 
-let first=playlists[name][0]
-
-let count=playlists[name].length
-
-let thumb="https://img.youtube.com/vi/"+first.id+"/hqdefault.jpg"
-
-box.innerHTML+=`
-
-<div class="playlist-card" onclick="openPlaylist('${name}')">
-
+playlistCards.innerHTML+=`
+<div class="playlist-card" onclick="openPlaylist('${p}')">
 <div class="playlist-thumb">
-
-<img src="${thumb}">
-
-<div class="overlay">▶ Play all</div>
-
-<div class="count">${count} videos</div>
-
+<img src="https://img.youtube.com/vi/${first.id}/hqdefault.jpg">
+<div class="overlay">Play all</div>
+<div class="count">${map[p].length} videos</div>
 </div>
-
-<b>${name}</b>
-
+<b>${p}</b>
 </div>
-
 `
 
 }
@@ -550,87 +563,56 @@ function openPlaylist(name){
 
 let list=videos.filter(v=>v.playlist===name)
 
-let page=document.getElementById("playlistPage")
-
-let first=list[0]
-
-page.innerHTML=`
-
+playlistPage.innerHTML=`
 <h2>${name}</h2>
-
 <div class="player" id="player"></div>
-
 <div class="queue" id="queue"></div>
-
 `
 
-playVideoInline(first.id)
+playInline(list[0].id)
 
-let q=document.getElementById("queue")
-
-q.innerHTML=""
+queue.innerHTML=""
 
 list.forEach((v,i)=>{
-
-let thumb="https://img.youtube.com/vi/"+v.id+"/mqdefault.jpg"
-
-q.innerHTML+=`
-
-<div class="queue-item" onclick="playVideoInline('${v.id}')">
-
-<img src="${thumb}">
-
-<div><b>${i+1}. ${v.title}</b></div>
-
+queue.innerHTML+=`
+<div class="queue-item" onclick="playInline('${v.id}')">
+<img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg">
+<b>${i+1}. ${v.title}</b>
 </div>
-
 `
-
 })
 
 }
 
-function playVideoInline(id){
-
-document.getElementById("player").innerHTML=
-`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`
-
+function playInline(id){
+player.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`
 }
 
 function searchVideo(){
 
-let text=document.getElementById("search").value.toLowerCase()
+let t=search.value.toLowerCase()
 
 document.querySelectorAll(".video").forEach(v=>{
-v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
+v.style.display=v.innerText.toLowerCase().includes(t)?"block":"none"
 })
 
 }
 
 function bulkImport(){
 
-let lines=document.getElementById("bulkLinks").value.split("\n")
+bulkLinks.value.split("\n").forEach(l=>{
 
-lines.forEach(link=>{
-
-let id=getID(link)
+let id=getID(l)
 
 if(id){
-
-videos.push({
-title:"Imported",
-id:id,
-category:"Education",
-playlist:"Imported"
-})
-
+videos.push({id,title:"Imported",category:"Education",playlist:"Imported",date:Date.now()})
 }
 
 })
 
-saveVideos()
+save()
 
-showVideos()
+show()
 
 }
 
@@ -638,46 +620,36 @@ function exportLibrary(){
 
 let blob=new Blob([JSON.stringify(videos)],{type:"application/json"})
 
-let url=URL.createObjectURL(blob)
-
 let a=document.createElement("a")
 
-a.href=url
+a.href=URL.createObjectURL(blob)
+
 a.download="mytube_backup.json"
 
 a.click()
 
 }
 
-function importLibrary(){
+function importLibrary(file){
 
-let file=document.getElementById("importFile").files[0]
+let r=new FileReader()
 
-let reader=new FileReader()
-
-reader.onload=function(e){
-
+r.onload=e=>{
 videos=JSON.parse(e.target.result)
-
-saveVideos()
-
-showVideos()
-
+save()
+show()
 }
 
-reader.readAsText(file)
+r.readAsText(file)
 
 }
 
 function updateStats(){
 
-let totalVideos=[...new Set(videos.map(v=>v.id))].length
-let totalPlaylists=[...new Set(videos.map(v=>v.playlist))].length
+let u=[...new Set(videos.map(v=>v.id))].length
+let p=[...new Set(videos.map(v=>v.playlist))].length
 
-document.getElementById("stats").innerHTML=
-`Total Unique Videos: ${totalVideos}<br>
-Total Playlists: ${totalPlaylists}<br>
-Total Entries: ${videos.length}`
+stats.innerHTML=`Unique videos: ${u}<br>Playlists: ${p}<br>Total entries: ${videos.length}`
 
 }
 
@@ -685,7 +657,7 @@ function toggleDark(){
 document.body.classList.toggle("dark")
 }
 
-showVideos()
+show()
 
 </script>
 
