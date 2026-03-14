@@ -2,8 +2,7 @@
 <html>
 <head>
 
-<title>MyTube V17</title>
-
+<title>MyTube V18</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -189,14 +188,11 @@ background:#1e1e1e;
 
 <header>
 
-<div>MyTube V17</div>
+<div>MyTube V18</div>
 
 <div>
-
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
-
 <button onclick="toggleDark()">🌙</button>
-
 </div>
 
 </header>
@@ -206,7 +202,6 @@ background:#1e1e1e;
 <h3>Add Video</h3>
 
 <input id="videoLink" placeholder="YouTube link" oninput="previewVideo()">
-
 <input id="videoTitle" placeholder="Video title">
 
 <select id="videoCategory">
@@ -227,43 +222,29 @@ background:#1e1e1e;
 <div id="preview" class="preview"></div>
 
 <h3>Videos</h3>
-
 <div id="videoGrid" class="grid"></div>
 
 <h3>Playlists</h3>
-
 <div id="playlistCards" class="playlist-grid"></div>
 
 <div id="playlistPage"></div>
 
 <div class="stats">
-
 <h3>Library Statistics</h3>
-
 <div id="stats"></div>
-
 </div>
 
 <div class="section">
-
 <h3>Bulk Import</h3>
-
 <textarea id="bulkLinks"></textarea>
-
 <br>
-
 <button onclick="bulkImport()">Import</button>
-
 </div>
 
 <div class="section">
-
 <h3>Library Tools</h3>
-
 <button onclick="exportLibrary()">Export Backup</button>
-
 <input type="file" id="importFile" onchange="importLibrary()">
-
 </div>
 
 </div>
@@ -291,7 +272,6 @@ function previewVideo(){
 
 let url=document.getElementById("videoLink").value
 let id=getID(url)
-
 if(!id) return
 
 let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
@@ -315,13 +295,11 @@ let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
-/* CLEAN PLAYLIST */
+/* clean playlist */
 
 if(!playlist || playlist.trim()==="" || playlist==="undefined" || playlist==="()"){
 playlist="General"
 }
-
-/* DUPLICATE CHECK */
 
 let duplicate=videos.find(v=>v.id===id && v.playlist===playlist)
 
@@ -338,14 +316,14 @@ showVideos()
 
 }
 
+/* SHOW VIDEOS */
+
 function showVideos(){
 
 let grid=document.getElementById("videoGrid")
-
 grid.innerHTML=""
 
 let unique={}
-
 videos.forEach(v=>{unique[v.id]=v})
 
 Object.values(unique).forEach(v=>{
@@ -388,6 +366,78 @@ updateStats()
 
 }
 
+/* EDIT */
+
+function editVideo(id){
+
+let v=videos.find(v=>v.id===id)
+
+let newTitle=prompt("Edit title",v.title)
+if(newTitle) v.title=newTitle
+
+let newCategory=prompt("Edit category",v.category)
+if(newCategory) v.category=newCategory
+
+saveVideos()
+showVideos()
+
+}
+
+/* DELETE */
+
+function deleteVideo(id){
+
+if(!confirm("Delete video?")) return
+
+videos = videos.filter(v=>v.id!==id)
+
+saveVideos()
+
+showVideos()
+
+}
+
+/* PLAYER */
+
+function playVideo(id){
+
+watchProgress.push({id:id})
+saveProgress()
+
+let container=document.createElement("div")
+
+container.style.position="fixed"
+container.style.top="0"
+container.style.left="0"
+container.style.width="100%"
+container.style.height="100%"
+container.style.background="black"
+container.style.zIndex="9999"
+
+let iframe=document.createElement("iframe")
+
+iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+iframe.style.width="100%"
+iframe.style.height="100%"
+
+let close=document.createElement("button")
+
+close.innerHTML="✕ Close"
+close.style.position="absolute"
+close.style.top="20px"
+close.style.right="20px"
+
+close.onclick=()=>container.remove()
+
+container.appendChild(iframe)
+container.appendChild(close)
+
+document.body.appendChild(container)
+
+}
+
+/* PLAYLISTS */
+
 function generatePlaylists(){
 
 let playlists={}
@@ -396,10 +446,7 @@ videos.forEach(v=>{
 
 let name=v.playlist
 
-if(!name) return
-if(name==="undefined") return
-if(name==="()") return
-if(name.trim()==="") return
+if(!name || name==="undefined" || name==="()" || name.trim()==="") return
 
 if(!playlists[name]) playlists[name]=[]
 
@@ -414,7 +461,6 @@ box.innerHTML=""
 for(let name in playlists){
 
 let first=playlists[name][0]
-
 let count=playlists[name].length
 
 let thumb="https://img.youtube.com/vi/"+first.id+"/hqdefault.jpg"
@@ -443,59 +489,64 @@ box.innerHTML+=`
 
 }
 
-function updateStats(){
+/* OPEN PLAYLIST */
 
-let totalVideos=[...new Set(videos.map(v=>v.id))].length
+function openPlaylist(name){
 
-let totalPlaylists=[...new Set(videos.map(v=>v.playlist))].length
+let list=videos.filter(v=>v.playlist===name)
 
-document.getElementById("stats").innerHTML=`
-Total Unique Videos: ${totalVideos} <br>
-Total Playlists: ${totalPlaylists} <br>
-Total Entries: ${videos.length}
+let page=document.getElementById("playlistPage")
+
+let first=list[0]
+
+page.innerHTML=`
+
+<h2>${name}</h2>
+
+<div class="player" id="player"></div>
+
+<div class="queue" id="queue"></div>
+
 `
 
-}
+playVideoInline(first.id)
 
-function playVideo(id){
+let q=document.getElementById("queue")
 
-watchProgress.push({id:id})
+q.innerHTML=""
 
-saveProgress()
+list.forEach((v,i)=>{
 
-let container=document.createElement("div")
+let thumb="https://img.youtube.com/vi/"+v.id+"/mqdefault.jpg"
 
-container.style.position="fixed"
-container.style.top="0"
-container.style.left="0"
-container.style.width="100%"
-container.style.height="100%"
-container.style.background="black"
-container.style.zIndex="9999"
+q.innerHTML+=`
 
-let iframe=document.createElement("iframe")
+<div class="queue-item" onclick="playVideoInline('${v.id}')">
 
-iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+<img src="${thumb}">
 
-iframe.style.width="100%"
-iframe.style.height="100%"
+<div>
 
-let close=document.createElement("button")
+<b>${i+1}. ${v.title}</b>
 
-close.innerHTML="✕ Close"
+</div>
 
-close.style.position="absolute"
-close.style.top="20px"
-close.style.right="20px"
+</div>
 
-close.onclick=()=>container.remove()
+`
 
-container.appendChild(iframe)
-container.appendChild(close)
-
-document.body.appendChild(container)
+})
 
 }
+
+function playVideoInline(id){
+
+document.getElementById("player").innerHTML=
+`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`
+
+}
+
+/* SEARCH */
 
 function searchVideo(){
 
@@ -504,6 +555,81 @@ let text=document.getElementById("search").value.toLowerCase()
 document.querySelectorAll(".video").forEach(v=>{
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
 })
+
+}
+
+/* BULK IMPORT */
+
+function bulkImport(){
+
+let lines=document.getElementById("bulkLinks").value.split("\n")
+
+lines.forEach(link=>{
+
+let id=getID(link)
+
+if(id){
+
+videos.push({
+title:"Imported",
+id:id,
+category:"Education",
+playlist:"Imported"
+})
+
+}
+
+})
+
+saveVideos()
+showVideos()
+
+}
+
+/* BACKUP */
+
+function exportLibrary(){
+
+let blob=new Blob([JSON.stringify(videos)],{type:"application/json"})
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+a.download="mytube_backup.json"
+a.click()
+
+}
+
+function importLibrary(){
+
+let file=document.getElementById("importFile").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+videos=JSON.parse(e.target.result)
+
+saveVideos()
+showVideos()
+
+}
+
+reader.readAsText(file)
+
+}
+
+function updateStats(){
+
+let totalVideos=[...new Set(videos.map(v=>v.id))].length
+let totalPlaylists=[...new Set(videos.map(v=>v.playlist))].length
+
+document.getElementById("stats").innerHTML=
+`Total Unique Videos: ${totalVideos}<br>
+Total Playlists: ${totalPlaylists}<br>
+Total Entries: ${videos.length}`
 
 }
 
@@ -516,5 +642,4 @@ showVideos()
 </script>
 
 </body>
-
 </html>
