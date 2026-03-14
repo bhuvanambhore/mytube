@@ -312,10 +312,32 @@ let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
-videos.push({title,id,category,playlist})
+if(!id){
+alert("Invalid YouTube link")
+return
+}
+
+/* DUPLICATE CHECK */
+
+let exists = videos.find(v =>
+v.id === id && v.playlist === playlist
+)
+
+if(exists){
+alert("This video already exists in this playlist")
+return
+}
+
+/* ADD VIDEO */
+
+videos.push({
+title,
+id,
+category,
+playlist
+})
 
 saveVideos()
-
 showVideos()
 
 }
