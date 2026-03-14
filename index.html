@@ -305,39 +305,45 @@ document.getElementById("videoTitle").value=data.title
 
 function addVideo(){
 
-let title=document.getElementById("videoTitle").value
-let url=document.getElementById("videoLink").value
-let category=document.getElementById("videoCategory").value
-let playlist=document.getElementById("videoPlaylist").value
+let title = document.getElementById("videoTitle").value
+let url = document.getElementById("videoLink").value
+let category = document.getElementById("videoCategory").value
+let playlist = document.getElementById("videoPlaylist").value
 
-let id=getID(url)
+let id = getID(url)
 
 if(!id){
 alert("Invalid YouTube link")
 return
 }
 
-/* DUPLICATE CHECK */
+/* CHECK DUPLICATE INSIDE SAME PLAYLIST */
 
-let exists = videos.find(v =>
-v.id === id && v.playlist === playlist
-)
+let duplicate = videos.some(function(v){
 
-if(exists){
+return v.id === id && v.playlist === playlist
+
+})
+
+if(duplicate){
+
 alert("This video already exists in this playlist")
+
 return
+
 }
 
 /* ADD VIDEO */
 
 videos.push({
-title,
-id,
-category,
-playlist
+title: title,
+id: id,
+category: category,
+playlist: playlist
 })
 
 saveVideos()
+
 showVideos()
 
 }
