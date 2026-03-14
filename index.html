@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
-<title>MyTube V16</title>
+<title>MyTube V17</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -190,7 +189,7 @@ background:#1e1e1e;
 
 <header>
 
-<div>MyTube V16</div>
+<div>MyTube V17</div>
 
 <div>
 
@@ -316,6 +315,14 @@ let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
+/* CLEAN PLAYLIST */
+
+if(!playlist || playlist.trim()==="" || playlist==="undefined" || playlist==="()"){
+playlist="General"
+}
+
+/* DUPLICATE CHECK */
+
 let duplicate=videos.find(v=>v.id===id && v.playlist===playlist)
 
 if(duplicate){
@@ -381,79 +388,23 @@ updateStats()
 
 }
 
-function deleteVideo(id){
-
-videos = videos.filter(v=>v.id!==id)
-
-saveVideos()
-
-showVideos()
-
-}
-
-function editVideo(id){
-
-let v=videos.find(v=>v.id===id)
-
-let title=prompt("Edit title",v.title)
-
-if(title) v.title=title
-
-saveVideos()
-
-showVideos()
-
-}
-
-function playVideo(id){
-
-watchProgress.push({id:id})
-
-saveProgress()
-
-let container=document.createElement("div")
-
-container.style.position="fixed"
-container.style.top="0"
-container.style.left="0"
-container.style.width="100%"
-container.style.height="100%"
-container.style.background="black"
-container.style.zIndex="9999"
-
-let iframe=document.createElement("iframe")
-
-iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
-
-iframe.allowFullscreen=true
-
-iframe.style.width="100%"
-iframe.style.height="100%"
-
-let close=document.createElement("button")
-
-close.innerHTML="✕ Close"
-
-close.style.position="absolute"
-close.style.top="20px"
-close.style.right="20px"
-
-close.onclick=()=>container.remove()
-
-container.appendChild(iframe)
-container.appendChild(close)
-
-document.body.appendChild(container)
-
-}
-
 function generatePlaylists(){
 
 let playlists={}
 
 videos.forEach(v=>{
-if(!playlists[v.playlist]) playlists[v.playlist]=[]
-playlists[v.playlist].push(v)
+
+let name=v.playlist
+
+if(!name) return
+if(name==="undefined") return
+if(name==="()") return
+if(name.trim()==="") return
+
+if(!playlists[name]) playlists[name]=[]
+
+playlists[name].push(v)
+
 })
 
 let box=document.getElementById("playlistCards")
@@ -492,61 +443,6 @@ box.innerHTML+=`
 
 }
 
-function openPlaylist(name){
-
-let list=videos.filter(v=>v.playlist===name)
-
-let page=document.getElementById("playlistPage")
-
-let first=list[0]
-
-page.innerHTML=`
-
-<h2>${name}</h2>
-
-<div class="player" id="player"></div>
-
-<div class="queue" id="queue"></div>
-
-`
-
-playVideoInline(first.id)
-
-let q=document.getElementById("queue")
-
-q.innerHTML=""
-
-list.forEach((v,i)=>{
-
-let thumb="https://img.youtube.com/vi/"+v.id+"/mqdefault.jpg"
-
-q.innerHTML+=`
-
-<div class="queue-item" onclick="playVideoInline('${v.id}')">
-
-<img src="${thumb}">
-
-<div>
-
-<b>${i+1}. ${v.title}</b>
-
-</div>
-
-</div>
-
-`
-
-})
-
-}
-
-function playVideoInline(id){
-
-document.getElementById("player").innerHTML=
-`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`
-
-}
-
 function updateStats(){
 
 let totalVideos=[...new Set(videos.map(v=>v.id))].length
@@ -554,12 +450,50 @@ let totalVideos=[...new Set(videos.map(v=>v.id))].length
 let totalPlaylists=[...new Set(videos.map(v=>v.playlist))].length
 
 document.getElementById("stats").innerHTML=`
-
 Total Unique Videos: ${totalVideos} <br>
 Total Playlists: ${totalPlaylists} <br>
 Total Entries: ${videos.length}
-
 `
+
+}
+
+function playVideo(id){
+
+watchProgress.push({id:id})
+
+saveProgress()
+
+let container=document.createElement("div")
+
+container.style.position="fixed"
+container.style.top="0"
+container.style.left="0"
+container.style.width="100%"
+container.style.height="100%"
+container.style.background="black"
+container.style.zIndex="9999"
+
+let iframe=document.createElement("iframe")
+
+iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+
+iframe.style.width="100%"
+iframe.style.height="100%"
+
+let close=document.createElement("button")
+
+close.innerHTML="✕ Close"
+
+close.style.position="absolute"
+close.style.top="20px"
+close.style.right="20px"
+
+close.onclick=()=>container.remove()
+
+container.appendChild(iframe)
+container.appendChild(close)
+
+document.body.appendChild(container)
 
 }
 
@@ -570,69 +504,6 @@ let text=document.getElementById("search").value.toLowerCase()
 document.querySelectorAll(".video").forEach(v=>{
 v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
 })
-
-}
-
-function bulkImport(){
-
-let lines=document.getElementById("bulkLinks").value.split("\n")
-
-lines.forEach(link=>{
-
-let id=getID(link)
-
-if(id){
-
-videos.push({
-title:"Imported",
-id:id,
-category:"Education",
-playlist:"Imported"
-})
-
-}
-
-})
-
-saveVideos()
-
-showVideos()
-
-}
-
-function exportLibrary(){
-
-let blob=new Blob([JSON.stringify(videos)],{type:"application/json"})
-
-let url=URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-
-a.href=url
-
-a.download="mytube_backup.json"
-
-a.click()
-
-}
-
-function importLibrary(){
-
-let file=document.getElementById("importFile").files[0]
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-
-videos=JSON.parse(e.target.result)
-
-saveVideos()
-
-showVideos()
-
-}
-
-reader.readAsText(file)
 
 }
 
