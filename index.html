@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>MyTube V18</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyTube V20</title>
 
 <style>
 
@@ -147,10 +146,6 @@ padding:10px;
 border-radius:8px;
 }
 
-.dark .queue{
-background:#1e1e1e;
-}
-
 .queue-item{
 display:flex;
 gap:10px;
@@ -165,10 +160,6 @@ height:70px;
 object-fit:cover;
 }
 
-.section{
-margin-top:35px;
-}
-
 .stats{
 margin-top:20px;
 background:white;
@@ -176,19 +167,40 @@ padding:15px;
 border-radius:8px;
 }
 
-.dark .stats{
-background:#1e1e1e;
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:white;
+padding:20px;
+border-radius:8px;
+width:300px;
+}
+
+.popup-box input,
+.popup-box select{
+width:100%;
+padding:8px;
+margin-bottom:10px;
 }
 
 </style>
-
 </head>
 
 <body>
 
 <header>
 
-<div>MyTube V18</div>
+<div>MyTube V20</div>
 
 <div>
 <input id="search" placeholder="Search videos" onkeyup="searchVideo()">
@@ -234,17 +246,43 @@ background:#1e1e1e;
 <div id="stats"></div>
 </div>
 
-<div class="section">
 <h3>Bulk Import</h3>
+
 <textarea id="bulkLinks"></textarea>
 <br>
 <button onclick="bulkImport()">Import</button>
-</div>
 
-<div class="section">
-<h3>Library Tools</h3>
+<h3>Backup</h3>
+
 <button onclick="exportLibrary()">Export Backup</button>
 <input type="file" id="importFile" onchange="importLibrary()">
+
+</div>
+
+<div id="editPopup" class="popup">
+
+<div class="popup-box">
+
+<h3>Edit Video</h3>
+
+<input id="editTitle">
+
+<select id="editCategory">
+<option>Finance</option>
+<option>Coding</option>
+<option>Education</option>
+<option>Health Food</option>
+<option>GK</option>
+<option>Full Body Care</option>
+<option>Gym/Yoga</option>
+<option>Trade</option>
+</select>
+
+<input id="editPlaylist">
+
+<button onclick="saveEdit()">Save</button>
+<button onclick="closePopup()">Cancel</button>
+
 </div>
 
 </div>
@@ -253,6 +291,7 @@ background:#1e1e1e;
 
 let videos = JSON.parse(localStorage.getItem("videos")) || []
 let watchProgress = JSON.parse(localStorage.getItem("progress")) || []
+let editingID = null
 
 function saveVideos(){
 localStorage.setItem("videos",JSON.stringify(videos))
@@ -272,6 +311,7 @@ function previewVideo(){
 
 let url=document.getElementById("videoLink").value
 let id=getID(url)
+
 if(!id) return
 
 let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
@@ -295,8 +335,6 @@ let playlist=document.getElementById("videoPlaylist").value
 
 let id=getID(url)
 
-/* clean playlist */
-
 if(!playlist || playlist.trim()==="" || playlist==="undefined" || playlist==="()"){
 playlist="General"
 }
@@ -316,15 +354,15 @@ showVideos()
 
 }
 
-/* SHOW VIDEOS */
-
 function showVideos(){
 
 let grid=document.getElementById("videoGrid")
+
 grid.innerHTML=""
 
 let unique={}
-videos.forEach(v=>{unique[v.id]=v})
+
+videos.forEach(v=>unique[v.id]=v)
 
 Object.values(unique).forEach(v=>{
 
@@ -346,11 +384,9 @@ grid.innerHTML+=`
 
 <div class="category">${v.category}</div>
 
-<div class="progress">
-${progress ? "Watched" : "Not watched"}
-</div>
+<div class="progress">${progress?"Watched":"Not watched"}</div>
 
-<button onclick="editVideo('${v.id}')">Edit</button>
+<button onclick="openEdit('${v.id}')">Edit</button>
 <button onclick="deleteVideo('${v.id}')">Delete</button>
 
 </div>
@@ -366,24 +402,46 @@ updateStats()
 
 }
 
-/* EDIT */
-
-function editVideo(id){
+function openEdit(id){
 
 let v=videos.find(v=>v.id===id)
 
-let newTitle=prompt("Edit title",v.title)
-if(newTitle) v.title=newTitle
+editingID=id
 
-let newCategory=prompt("Edit category",v.category)
-if(newCategory) v.category=newCategory
+document.getElementById("editTitle").value=v.title
+document.getElementById("editCategory").value=v.category
+document.getElementById("editPlaylist").value=v.playlist
+
+document.getElementById("editPopup").style.display="flex"
+
+}
+
+function saveEdit(){
+
+let v=videos.find(v=>v.id===editingID)
+
+v.title=document.getElementById("editTitle").value
+v.category=document.getElementById("editCategory").value
+
+let p=document.getElementById("editPlaylist").value
+
+if(!p || p.trim()==="" || p==="undefined" || p==="()"){
+p="General"
+}
+
+v.playlist=p
 
 saveVideos()
+
+closePopup()
+
 showVideos()
 
 }
 
-/* DELETE */
+function closePopup(){
+document.getElementById("editPopup").style.display="none"
+}
 
 function deleteVideo(id){
 
@@ -397,11 +455,10 @@ showVideos()
 
 }
 
-/* PLAYER */
-
 function playVideo(id){
 
 watchProgress.push({id:id})
+
 saveProgress()
 
 let container=document.createElement("div")
@@ -423,6 +480,7 @@ iframe.style.height="100%"
 let close=document.createElement("button")
 
 close.innerHTML="✕ Close"
+
 close.style.position="absolute"
 close.style.top="20px"
 close.style.right="20px"
@@ -435,8 +493,6 @@ container.appendChild(close)
 document.body.appendChild(container)
 
 }
-
-/* PLAYLISTS */
 
 function generatePlaylists(){
 
@@ -461,6 +517,7 @@ box.innerHTML=""
 for(let name in playlists){
 
 let first=playlists[name][0]
+
 let count=playlists[name].length
 
 let thumb="https://img.youtube.com/vi/"+first.id+"/hqdefault.jpg"
@@ -488,8 +545,6 @@ box.innerHTML+=`
 }
 
 }
-
-/* OPEN PLAYLIST */
 
 function openPlaylist(name){
 
@@ -525,11 +580,7 @@ q.innerHTML+=`
 
 <img src="${thumb}">
 
-<div>
-
-<b>${i+1}. ${v.title}</b>
-
-</div>
+<div><b>${i+1}. ${v.title}</b></div>
 
 </div>
 
@@ -546,8 +597,6 @@ document.getElementById("player").innerHTML=
 
 }
 
-/* SEARCH */
-
 function searchVideo(){
 
 let text=document.getElementById("search").value.toLowerCase()
@@ -557,8 +606,6 @@ v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
 })
 
 }
-
-/* BULK IMPORT */
 
 function bulkImport(){
 
@@ -582,11 +629,10 @@ playlist:"Imported"
 })
 
 saveVideos()
+
 showVideos()
 
 }
-
-/* BACKUP */
 
 function exportLibrary(){
 
@@ -598,6 +644,7 @@ let a=document.createElement("a")
 
 a.href=url
 a.download="mytube_backup.json"
+
 a.click()
 
 }
@@ -613,6 +660,7 @@ reader.onload=function(e){
 videos=JSON.parse(e.target.result)
 
 saveVideos()
+
 showVideos()
 
 }
