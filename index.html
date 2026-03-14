@@ -3,11 +3,176 @@
 
 <head>
 
-<title>MyTube V17</title>
+<title>MyTube V14</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f5f5f5;
+color:#000;
+}
+
+.dark{
+background:#121212;
+color:white;
+}
+
+header{
+background:#ff0000;
+color:white;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+header input{
+padding:8px;
+width:220px;
+}
+
+.container{
+padding:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+gap:20px;
+}
+
+.video{
+background:white;
+border-radius:8px;
+overflow:hidden;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.dark .video{
+background:#1e1e1e;
+}
+
+.thumbnail img{
+width:100%;
+height:160px;
+object-fit:cover;
+cursor:pointer;
+}
+
+.info{
+padding:10px;
+}
+
+.category{
+font-size:12px;
+color:gray;
+}
+
+.playlist{
+font-size:12px;
+color:#999;
+}
+
+.preview img{
+width:260px;
+border-radius:8px;
+margin-top:10px;
+}
+
+button{
+padding:6px 10px;
+margin-top:6px;
+cursor:pointer;
+}
+
+.playlist-grid{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+.playlist-card{
+width:260px;
+cursor:pointer;
+}
+
+.playlist-thumb{
+position:relative;
+height:150px;
+border-radius:8px;
+overflow:hidden;
+}
+
+.playlist-thumb img{
+width:100%;
+height:100%;
+object-fit:cover;
+filter:brightness(0.7);
+}
+
+.overlay{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+color:white;
+background:rgba(0,0,0,0.6);
+padding:8px 16px;
+border-radius:6px;
+}
+
+.count{
+position:absolute;
+bottom:8px;
+right:8px;
+color:white;
+background:rgba(0,0,0,0.6);
+padding:4px 6px;
+border-radius:4px;
+font-size:12px;
+}
+
+.player iframe{
+width:100%;
+height:70vh;
+border:none;
+}
+
+.queue{
+margin-top:20px;
+background:white;
+padding:10px;
+border-radius:8px;
+}
+
+.dark .queue{
+background:#1e1e1e;
+}
+
+.queue-item{
+display:flex;
+gap:10px;
+padding:8px;
+cursor:pointer;
+border-bottom:1px solid #eee;
+}
+
+.queue-item img{
+width:120px;
+height:70px;
+object-fit:cover;
+}
+
+.section{
+margin-top:35px;
+}
+
+</style>
 
 </head>
 
@@ -15,17 +180,11 @@
 
 <header>
 
-<div class="logo">
-MyTube V17
-</div>
+<div>MyTube V14</div>
 
-<div class="header-right">
+<div>
 
-<input 
-id="search"
-placeholder="Search videos"
-onkeyup="searchVideo()"
->
+<input id="search" placeholder="Search videos" onkeyup="searchVideo()">
 
 <button onclick="toggleDark()">🌙</button>
 
@@ -35,22 +194,11 @@ onkeyup="searchVideo()"
 
 <div class="container">
 
-<!-- ADD VIDEO -->
+<h3>Add Video</h3>
 
-<section>
+<input id="videoLink" placeholder="YouTube link" oninput="previewVideo()">
 
-<h2>Add Video</h2>
-
-<input 
-id="videoLink"
-placeholder="Paste YouTube link"
-oninput="previewVideo()"
->
-
-<input 
-id="videoTitle"
-placeholder="Video title"
->
+<input id="videoTitle" placeholder="Video title">
 
 <select id="videoCategory">
 
@@ -65,26 +213,15 @@ placeholder="Video title"
 
 </select>
 
-<input 
-id="videoPlaylist"
-placeholder="Playlists (comma separated)"
->
+<input id="videoPlaylist" placeholder="Playlist name">
 
-<button onclick="addVideo()">
-Add Video
-</button>
+<button onclick="addVideo()">Add</button>
 
-<div id="preview"></div>
+<div id="preview" class="preview"></div>
 
-</section>
+<div class="section">
 
-<!-- CATEGORY FILTER -->
-
-<section>
-
-<h3>Category</h3>
-
-<div class="category-bar">
+<h4>Category</h4>
 
 <button onclick="filterCategory('All')">All</button>
 <button onclick="filterCategory('Finance')">Finance</button>
@@ -98,94 +235,393 @@ Add Video
 
 </div>
 
-</section>
-
-<!-- CONTINUE WATCHING -->
-
-<section>
-
-<h3>Continue Watching</h3>
-
-<div id="continueWatching" class="grid"></div>
-
-</section>
-
-<!-- VIDEOS -->
-
-<section>
-
 <h3>Videos</h3>
 
 <div id="videoGrid" class="grid"></div>
-
-</section>
-
-<!-- PLAYLISTS -->
-
-<section>
 
 <h3>Playlists</h3>
 
 <div id="playlistCards" class="playlist-grid"></div>
 
-</section>
-
-<!-- PLAYLIST PAGE -->
-
-<section>
-
 <div id="playlistPage"></div>
 
-</section>
-
-<!-- TRENDING -->
-
-<section>
-
-<h3>Trending</h3>
-
-<div id="trendingVideos" class="grid"></div>
-
-</section>
-
-<!-- BULK IMPORT -->
-
-<section>
+<div class="section">
 
 <h3>Bulk Import</h3>
 
-<textarea 
-id="bulkLinks"
-placeholder="Paste multiple YouTube links"
-></textarea>
+<textarea id="bulkLinks"></textarea>
 
-<button onclick="bulkImport()">
-Import Videos
-</button>
+<br>
 
-</section>
-
-<!-- LIBRARY -->
-
-<section>
-
-<h3>Library Tools</h3>
-
-<button onclick="exportLibrary()">
-Export Backup
-</button>
-
-<input 
-type="file"
-id="importFile"
-onchange="importLibrary()"
->
-
-</section>
+<button onclick="bulkImport()">Import</button>
 
 </div>
 
-<script src="app.js"></script>
+<div class="section">
+
+<h3>Library Tools</h3>
+
+<button onclick="exportLibrary()">Export Backup</button>
+
+<input type="file" id="importFile" onchange="importLibrary()">
+
+</div>
+
+</div>
+
+<script>
+
+let videos=JSON.parse(localStorage.getItem("videos"))||[]
+let currentCategory="All"
+
+function saveVideos(){
+localStorage.setItem("videos",JSON.stringify(videos))
+}
+
+function getID(url){
+let r=/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+let m=url.match(r)
+return m?m[1]:null
+}
+
+function previewVideo(){
+
+let url=document.getElementById("videoLink").value
+let id=getID(url)
+
+if(!id) return
+
+let thumb="https://img.youtube.com/vi/"+id+"/hqdefault.jpg"
+
+document.getElementById("preview").innerHTML=`<img src="${thumb}">`
+
+fetch("https://noembed.com/embed?url="+url)
+.then(r=>r.json())
+.then(data=>{
+document.getElementById("videoTitle").value=data.title
+})
+
+}
+
+function addVideo(){
+
+let title=document.getElementById("videoTitle").value
+let url=document.getElementById("videoLink").value
+let category=document.getElementById("videoCategory").value
+let playlist=document.getElementById("videoPlaylist").value
+
+let id=getID(url)
+
+videos.push({title,id,category,playlist})
+
+saveVideos()
+
+showVideos()
+
+}
+
+function deleteVideo(i){
+
+if(confirm("Delete video?")){
+
+videos.splice(i,1)
+
+saveVideos()
+
+showVideos()
+
+}
+
+}
+
+function editVideo(i){
+
+let title=prompt("Edit title",videos[i].title)
+let category=prompt("Edit category",videos[i].category)
+let playlist=prompt("Edit playlist",videos[i].playlist)
+
+if(title) videos[i].title=title
+if(category) videos[i].category=category
+if(playlist) videos[i].playlist=playlist
+
+saveVideos()
+
+showVideos()
+
+}
+
+function showVideos(){
+
+let grid=document.getElementById("videoGrid")
+
+grid.innerHTML=""
+
+videos.forEach((v,i)=>{
+
+if(currentCategory!="All" && v.category!=currentCategory) return
+
+let thumb="https://img.youtube.com/vi/"+v.id+"/hqdefault.jpg"
+
+grid.innerHTML+=`
+
+<div class="video">
+
+<div class="thumbnail" onclick="playVideo('${v.id}')">
+<img src="${thumb}">
+</div>
+
+<div class="info">
+
+<b>${v.title}</b><br>
+
+<div class="category">${v.category}</div>
+
+<div class="playlist">${v.playlist}</div>
+
+<button onclick="editVideo(${i})">Edit</button>
+<button onclick="deleteVideo(${i})">Delete</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+generatePlaylists()
+
+}
+
+function playVideo(id){
+
+let container=document.createElement("div")
+
+container.style.position="fixed"
+container.style.top="0"
+container.style.left="0"
+container.style.width="100%"
+container.style.height="100%"
+container.style.background="black"
+container.style.zIndex="9999"
+
+let iframe=document.createElement("iframe")
+
+iframe.src="https://www.youtube.com/embed/"+id+"?autoplay=1"
+
+iframe.allow="autoplay; fullscreen"
+iframe.allowFullscreen=true
+
+iframe.style.width="100%"
+iframe.style.height="100%"
+iframe.style.border="none"
+
+let close=document.createElement("button")
+
+close.innerHTML="✕ Close"
+close.style.position="absolute"
+close.style.top="20px"
+close.style.right="20px"
+
+close.onclick=()=>{
+
+container.remove()
+
+if(document.fullscreenElement) document.exitFullscreen()
+
+}
+
+container.appendChild(iframe)
+container.appendChild(close)
+
+document.body.appendChild(container)
+
+container.requestFullscreen?.()
+
+}
+
+function filterCategory(cat){
+
+currentCategory=cat
+
+showVideos()
+
+}
+
+function generatePlaylists(){
+
+let playlists={}
+
+videos.forEach(v=>{
+if(v.playlist){
+if(!playlists[v.playlist]) playlists[v.playlist]=[]
+playlists[v.playlist].push(v)
+}
+})
+
+let box=document.getElementById("playlistCards")
+
+box.innerHTML=""
+
+for(let name in playlists){
+
+let first=playlists[name][0]
+
+let count=playlists[name].length
+
+let thumb="https://img.youtube.com/vi/"+first.id+"/hqdefault.jpg"
+
+box.innerHTML+=`
+
+<div class="playlist-card" onclick="openPlaylist('${name}')">
+
+<div class="playlist-thumb">
+
+<img src="${thumb}">
+
+<div class="overlay">▶ Play all</div>
+
+<div class="count">${count} videos</div>
+
+</div>
+
+<b>${name}</b>
+
+</div>
+
+`
+
+}
+
+}
+
+function openPlaylist(name){
+
+let list=videos.filter(v=>v.playlist==name)
+
+let page=document.getElementById("playlistPage")
+
+let first=list[0]
+
+page.innerHTML=`
+
+<h2>${name}</h2>
+
+<div class="player" id="player"></div>
+
+<div class="queue" id="queue"></div>
+
+`
+
+playVideoInline(first.id)
+
+let q=document.getElementById("queue")
+
+q.innerHTML=""
+
+list.forEach((v,i)=>{
+
+let thumb="https://img.youtube.com/vi/"+v.id+"/mqdefault.jpg"
+
+q.innerHTML+=`
+
+<div class="queue-item" onclick="playVideoInline('${v.id}')">
+
+<img src="${thumb}">
+
+<div>
+
+<b>${i+1}. ${v.title}</b><br>
+
+${v.category}
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
+function playVideoInline(id){
+
+document.getElementById("player").innerHTML=
+
+`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen></iframe>`
+
+}
+
+function searchVideo(){
+
+let text=document.getElementById("search").value.toLowerCase()
+
+document.querySelectorAll(".video").forEach(v=>{
+v.style.display=v.innerText.toLowerCase().includes(text)?"block":"none"
+})
+
+}
+
+function bulkImport(){
+
+let lines=document.getElementById("bulkLinks").value.split("\n")
+
+lines.forEach(link=>{
+let id=getID(link)
+if(id) videos.push({title:"Imported",id,category:"Education",playlist:"Imported"})
+})
+
+saveVideos()
+
+showVideos()
+
+}
+
+function exportLibrary(){
+
+let blob=new Blob([JSON.stringify(videos)],{type:"application/json"})
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+a.download="mytube_backup.json"
+
+a.click()
+
+}
+
+function importLibrary(){
+
+let file=document.getElementById("importFile").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+videos=JSON.parse(e.target.result)
+
+saveVideos()
+
+showVideos()
+
+}
+
+reader.readAsText(file)
+
+}
+
+function toggleDark(){
+
+document.body.classList.toggle("dark")
+
+}
+
+showVideos()
+
+</script>
 
 </body>
 
