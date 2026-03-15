@@ -424,10 +424,19 @@ updateStats()
 }
 
 function pinVideo(id){
-let v=videos.find(v=>v.id===id)
-v.pin=!v.pin
+
+let v = videos.find(v => v.id === id)
+
+if(!v) return
+
+/* toggle */
+
+v.pin = !v.pin
+
 save()
+
 show()
+
 }
 
 function openEdit(id){
