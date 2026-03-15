@@ -409,7 +409,9 @@ ${progress.find(p=>p.id===v.id)?"Watched":"Not watched"}
 
 <button onclick="openEdit('${v.id}')">Edit</button>
 <button onclick="deleteVideo('${v.id}')">Delete</button>
-<button onclick="pinVideo('${v.id}')">Pin</button>
+<button onclick="pinVideo('${v.id}')">
+${v.pin ? "Unpin" : "Pin"}
+</button>
 
 </div>
 
