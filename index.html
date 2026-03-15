@@ -526,39 +526,63 @@ show()
 
 function generatePlaylists(){
 
-let map={}
+let map = {}
 
-videos.forEach(v=>{
+videos.forEach(function(v){
 
-if(!v.playlist||v.playlist==="()"||v.playlist==="undefined")return
+let name = v.playlist
 
-if(!map[v.playlist])map[v.playlist]=[]
+/* CLEAN INVALID PLAYLIST NAMES */
 
-map[v.playlist].push(v)
+if(!name) return
+
+name = name.trim()
+
+if(name === "") return
+if(name === "()") return
+if(name === "undefined") return
+if(name === "null") return
+
+/* CREATE PLAYLIST */
+
+if(!map[name]){
+map[name] = []
+}
+
+map[name].push(v)
 
 })
 
-playlistCards.innerHTML=""
+playlistCards.innerHTML = ""
+
+/* BUILD PLAYLIST CARDS */
 
 for(let p in map){
 
-let first=map[p][0]
+let first = map[p][0]
 
-playlistCards.innerHTML+=`
+playlistCards.innerHTML += `
 <div class="playlist-card" onclick="openPlaylist('${p}')">
+
 <div class="playlist-thumb">
+
 <img src="https://img.youtube.com/vi/${first.id}/hqdefault.jpg">
+
 <div class="overlay">Play all</div>
+
 <div class="count">${map[p].length} videos</div>
+
 </div>
+
 <b>${p}</b>
+
 </div>
 `
 
 }
 
 }
-
+  
 function openPlaylist(name){
 
 let list=videos.filter(v=>v.playlist===name)
