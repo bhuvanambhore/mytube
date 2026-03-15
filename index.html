@@ -427,13 +427,20 @@ updateStats()
 
 function pinVideo(id){
 
-let v = videos.find(v => v.id === id)
+let found = false
 
-if(!v) return
+videos.forEach(function(v){
 
-/* toggle */
+if(v.id === id){
 
 v.pin = !v.pin
+found = true
+
+}
+
+})
+
+if(!found) return
 
 save()
 
